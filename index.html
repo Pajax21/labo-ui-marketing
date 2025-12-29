@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Outfit:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
         
         body { 
             font-family: 'Outfit', sans-serif; 
@@ -86,39 +87,118 @@
             transform: translateX(4px);
         }
 
-        .quiz-option {
-            transition: all 0.2s;
-        }
-        .quiz-option:hover {
-            background-color: #f8fafc;
-            transform: translateX(5px);
-        }
+        /* Mix Blend Mode */
+        .mix-multiply { mix-blend-mode: multiply; }
+        .mix-screen { mix-blend-mode: screen; }
 
-        /* FLASHCARDS 3D */
-        .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
-        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
-
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #0f172a; border-radius: 4px; border: 2px solid #f0f4f8; }
 
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Animation Mapping */
+        @keyframes ping-slow { 75%, 100% { transform: scale(1.5); opacity: 0; } }
+        .animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        
+        /* Flip Card pour PESTEL uniquement */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        @media (hover: hover) { .hover-flip:hover .flip-card-inner { transform: rotateY(180deg); } }
     </style>
+    
+    <!-- FONCTIONS UTILITAIRES (CHARGÉES EN PREMIER) -->
+    <script>
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound() {
+            if (audioContext.state === 'suspended') audioContext.resume();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            
+            if (!document.getElementById('sidebar-chapters').classList.contains('translate-x-full') && window.innerWidth < 1024) { 
+                toggleMobileChapters(); 
+            }
+            if (isClosed) { 
+                sidebar.classList.remove('-translate-x-full'); 
+                overlay.classList.remove('hidden'); 
+            } else { 
+                sidebar.classList.add('-translate-x-full'); 
+                overlay.classList.add('hidden'); 
+            }
+        }
+
+        function toggleMobileChapters() {
+            const sidebar = document.getElementById('sidebar-chapters');
+            const overlay = document.getElementById('mobile-overlay');
+            const isClosed = sidebar.classList.contains('translate-x-full');
+
+            if (!document.getElementById('main-sidebar').classList.contains('-translate-x-full') && window.innerWidth < 1024) { 
+                toggleMobileMenu(); 
+            }
+
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function closeAllMenus() {
+            if (window.innerWidth >= 1024) return; 
+            document.getElementById('main-sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-chapters').classList.add('translate-x-full');
+            document.getElementById('mobile-overlay').classList.add('hidden');
+        }
+        
+        function playAvatarSound() {
+            const bubble = document.getElementById('avatar-bubble');
+            bubble.classList.remove('hidden');
+            setTimeout(() => bubble.classList.add('hidden'), 2000);
+            const audio = new Audio('vash.mp3');
+            audio.play().catch(e => { console.log("Son manquant (vash.mp3)"); });
+        }
+        
+        function togglePestelCard(element) {
+            element.classList.toggle('flipped');
+        }
+    </script>
 </head>
 <body class="text-slate-800 h-screen overflow-hidden flex selection:bg-black selection:text-white relative">
 
-    <!-- 1. BARRE LATÉRALE GAUCHE (NAVIGATION) -->
+    <!-- OVERLAY MOBILE -->
+    <div id="mobile-overlay" onclick="closeAllMenus()" class="fixed inset-0 bg-black/20 z-30 hidden lg:hidden transition-opacity backdrop-blur-sm"></div>
+
+    <!-- 1. BARRE LATÉRALE GAUCHE -->
     <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 lg:w-80 manga-sidebar transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 flex flex-col justify-between h-full flex-shrink-0 bg-white shadow-2xl lg:shadow-none">
         
         <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%); background-size: 10px 10px;"></div>
 
         <div class="p-4 lg:p-6 relative z-10 flex flex-col h-full overflow-y-auto">
-            <!-- Logo + Bouton Fermer Mobile -->
+            <!-- Logo -->
             <div class="flex items-center justify-between mb-8">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 lg:w-12 lg:h-12 bg-slate-900 text-white border-2 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(255,100,0,1)] transform -rotate-3">
@@ -129,41 +209,9 @@
                 <button onclick="toggleMobileMenu()" class="lg:hidden p-2 text-slate-500 hover:text-red-500 bg-slate-100 rounded-lg border-2 border-transparent hover:border-slate-900"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
-            <!-- Menu Blocs -->
-            <nav class="space-y-6 flex-1">
-                <!-- BLOC 1 -->
-                <div onclick="playSound(); loadConstruction('Bloc 1 : Design Graphique'); closeAllMenus()" class="group cursor-pointer nav-item">
-                    <div class="flex items-center gap-3 p-2 opacity-60">
-                        <div class="p-2 border-2 border-slate-900 bg-pink-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><i data-lucide="palette" class="w-5 h-5 text-slate-900"></i></div>
-                        <div><span class="font-bold text-sm block uppercase">Bloc 1 : Design</span><span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span></div>
-                    </div>
-                </div>
-
-                <!-- BLOC 2 (ACTIF) -->
-                <div class="manga-panel p-4 rounded-xl bg-white relative">
-                    <div class="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-['Bangers'] px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-3">EN COURS</div>
-                    <div class="flex items-center gap-3 mb-4 text-slate-900 border-b-2 border-slate-100 pb-2">
-                        <i data-lucide="rocket" class="w-6 h-6 flex-shrink-0 text-orange-600"></i><span class="font-['Bangers'] text-xl tracking-wide">Bloc 2 : Marketing</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div id="nav-mod-1" onclick="playSound(); switchModule(0); closeAllMenus()" class="cursor-pointer group flex items-center gap-3 nav-item p-1 rounded hover:bg-slate-50">
-                            <div class="w-2 h-2 bg-slate-900 rounded-full group-hover:bg-orange-500 transition-colors"></div>
-                            <div class="flex-1"><p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 1</p><p class="text-[10px] font-medium text-slate-500">Stratégie & Analyse</p></div>
-                        </div>
-                        <div id="nav-mod-2" onclick="playSound(); switchModule(1); closeAllMenus()" class="cursor-pointer group flex items-center gap-3 nav-item opacity-70 p-1 rounded hover:bg-slate-50">
-                            <div class="w-2 h-2 border-2 border-slate-300 rounded-full"></div>
-                            <div class="flex-1"><p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 2</p><p class="text-[10px] font-medium text-slate-500">Brand Content</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BLOC 3 -->
-                <div onclick="playSound(); loadConstruction('Bloc 3 : Gestion de Projet'); closeAllMenus()" class="group cursor-pointer nav-item">
-                    <div class="flex items-center gap-3 p-2 opacity-60">
-                        <div class="p-2 border-2 border-slate-900 bg-cyan-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><i data-lucide="kanban-square" class="w-5 h-5 text-slate-900"></i></div>
-                        <div><span class="font-bold text-sm block uppercase">Bloc 3 : Gestion</span><span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span></div>
-                    </div>
-                </div>
+            <!-- Menu Blocs (Généré par JS) -->
+            <nav id="blocs-nav" class="space-y-6 flex-1">
+                <!-- Rempli dynamiquement -->
             </nav>
 
             <!-- Profil Utilisateur -->
@@ -182,9 +230,9 @@
                         <p class="font-['Bangers'] text-2xl tracking-wide text-slate-900">Angélique</p>
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Concepteur UI</p>
                         <div class="w-full bg-slate-200 h-3 rounded-full border-2 border-slate-900 overflow-hidden relative">
-                            <div class="bg-green-500 h-full w-[43%]"></div><div class="absolute top-0 left-0 w-full h-1 bg-white opacity-30"></div>
+                            <div class="bg-green-500 h-full w-[50%]"></div><div class="absolute top-0 left-0 w-full h-1 bg-white opacity-30"></div>
                         </div>
-                        <p class="text-[10px] text-right font-bold mt-1">43% XP</p>
+                        <p class="text-[10px] text-right font-bold mt-1">50% XP</p>
                     </div>
                 </div>
             </div>
@@ -199,43 +247,33 @@
             <button onclick="toggleMobileMenu()" class="lg:hidden p-2 -ml-2 text-slate-900"><i data-lucide="menu" class="w-8 h-8"></i></button>
 
             <div class="flex-1 px-4 lg:px-0 truncate">
-                <h1 id="header-title" class="text-xl lg:text-3xl text-slate-900 uppercase truncate">Module 1 : Stratégie</h1>
+                <h1 id="header-title" class="text-xl lg:text-3xl text-slate-900 uppercase truncate">Chargement...</h1>
                 <p id="header-subtitle" class="text-xs lg:text-sm font-bold text-slate-500 flex items-center gap-2 font-mono">
-                    <span class="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 border-2 border-black"></span> 5 CHAPITRES
+                    <span class="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 border-2 border-black"></span> ...
                 </p>
             </div>
 
+            <!-- Bouton Chapitres Mobile -->
             <div class="flex gap-2 lg:gap-4">
                 <button onclick="toggleMobileChapters()" class="lg:hidden p-2 text-slate-900 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_0px_#000] active:translate-y-1"><i data-lucide="list" class="w-5 h-5"></i></button>
-                <button onclick="startFlashcards()" class="hidden lg:flex btn-manga bg-yellow-400 text-slate-900 px-4 py-2 rounded-lg items-center gap-2 hover:bg-yellow-500">
-                    <i data-lucide="layers" class="w-5 h-5"></i> <span>Flashcards</span>
-                </button>
-                <button onclick="startQuiz()" class="hidden lg:flex btn-manga bg-indigo-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-indigo-700">
-                    <i data-lucide="swords" class="w-5 h-5"></i> <span>Duel Quiz</span>
-                </button>
+                <!-- Flashcards et Quiz supprimés -->
             </div>
         </header>
 
-        <!-- Corps du cours (Flex Row pour Desktop) -->
+        <!-- Corps du cours -->
         <div class="flex-1 flex overflow-hidden relative">
             
-            <!-- Zone de Lecture (Au Centre) -->
+            <!-- Zone de Lecture -->
             <div class="flex-1 overflow-y-auto p-4 lg:p-12 relative bg-[url('https://www.transparenttextures.com/patterns/white-diamond.png')]" id="course-content">
                 <!-- LE CONTENU -->
             </div>
 
-            <!-- Sommaire (Responsive: Sidebar Droite) -->
-            <!-- z-50 pour être sûr d'être au dessus -->
+            <!-- Sommaire (Sidebar Droite) -->
             <div id="sidebar-chapters" class="fixed inset-y-0 right-0 z-50 w-72 bg-slate-50 border-l-3 border-slate-900 transform translate-x-full lg:translate-x-0 lg:static lg:w-80 lg:block flex-shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] lg:shadow-none transition-transform duration-300 flex flex-col h-full">
-                <!-- Header du Sommaire (Mobile) -->
+                <!-- Header Mobile -->
                 <div class="p-4 bg-slate-900 text-white lg:hidden flex justify-between items-center border-b-2 border-black">
                     <span class="font-['Bangers'] text-xl">SOMMAIRE</span>
                     <button onclick="toggleMobileChapters()" class="p-1 hover:text-orange-500 bg-white text-slate-900 rounded border border-black"><i data-lucide="x" class="w-6 h-6"></i></button>
-                </div>
-                
-                <div class="p-4 grid grid-cols-2 gap-2 lg:hidden border-b-2 border-slate-200">
-                    <button onclick="startFlashcards(); closeAllMenus()" class="btn-manga bg-yellow-400 text-slate-900 py-2 text-xs rounded flex justify-center items-center gap-1"><i data-lucide="layers" class="w-4 h-4"></i> Flash</button>
-                    <button onclick="startQuiz(); closeAllMenus()" class="btn-manga bg-indigo-600 text-white py-2 text-xs rounded flex justify-center items-center gap-1"><i data-lucide="swords" class="w-4 h-4"></i> Quiz</button>
                 </div>
 
                 <div id="chapters-list" class="overflow-y-auto p-4 space-y-3 flex-1">
@@ -246,145 +284,375 @@
         </div>
     </main>
 
-    <!-- JAVASCRIPT -->
+    <!-- LOGIQUE DE L'APPLICATION -->
     <script>
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // --- DONNÉES CONTENU BLOC 1 - MODULE 1 (CULTURE GRAPHIQUE) ---
+        const bloc1_chapters = [
+            {
+                title: "1. L'Œil du Graphiste",
+                subtitle: "Histoire & Fondamentaux",
+                content: `
+                    <div class="mb-6"><p class="font-medium text-lg">"Tout commence par savoir regarder."</p></div>
+                    <h3 class="manga-title text-xl mb-4 text-center">LE BAUHAUS (1919-1933)</h3>
+                    <div class="manga-panel p-6 bg-yellow-50 border-yellow-400 mb-8 flex flex-col md:flex-row gap-6 items-center">
+                        <div class="w-full md:w-1/3 flex justify-center"><div class="w-24 h-24 border-4 border-black grid grid-cols-2 grid-rows-2"><div class="bg-black rounded-full m-1"></div><div class="border-2 border-black m-1"></div><div class="bg-black m-1"></div><div class="bg-yellow-400 m-1"></div></div></div>
+                        <div class="flex-1 text-sm"><p class="font-bold text-lg mb-2">LA RÈGLE D'OR : "La forme suit la fonction"</p><p>C'est l'école allemande qui a inventé le design moderne. On supprime le décoratif inutile. On cherche la simplicité, la géométrie, et l'usage.</p><div class="mt-3 bg-white p-2 border border-black rounded inline-block"><strong>Mots-clés :</strong> Minimalisme, Géométrie, Fonctionnel.</div></div>
+                    </div>
+                    <h3 class="manga-title text-xl mb-4 text-center">L'ABSTRACTION</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="manga-panel p-4 text-center"><i data-lucide="image" class="mx-auto mb-2 w-8 h-8 text-slate-400"></i><h4 class="font-bold">FIGURATIF</h4><p class="text-xs">Représente le réel (Photo).</p></div>
+                        <div class="manga-panel p-4 text-center bg-slate-900 text-white"><div class="flex justify-center gap-2 mb-2"><div class="w-4 h-4 bg-white rounded-full"></div><div class="w-4 h-4 border border-white"></div></div><h4 class="font-bold">ABSTRAIT</h4><p class="text-xs opacity-80">Simplification par la forme. <br>Le langage du Logo.</p></div>
+                    </div>
+                `
+            },
+            { title: "2. La Composition", subtitle: "L'art d'occuper l'espace", content: `<div class="mb-6"><p class="font-medium text-lg">Comment organiser les éléments pour guider l'œil ?</p></div><h3 class="manga-title text-xl mb-4 text-center">LA RÈGLE DES TIERS</h3><div class="relative w-full max-w-sm mx-auto aspect-video bg-cover bg-center border-4 border-black mb-4 shadow-[8px_8px_0px_0px_#000]" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80');"><div class="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none"><div class="border-r border-white/50"></div><div class="border-r border-white/50"></div><div></div><div class="border-r border-white/50 border-t border-b border-white/50"></div><div class="border-r border-white/50 border-t border-b border-white/50 flex items-center justify-center"><div class="w-4 h-4 bg-red-500 rounded-full animate-ping"></div></div><div class="border-t border-b border-white/50"></div><div class="border-r border-white/50"></div><div class="border-r border-white/50"></div><div></div></div></div><p class="text-xs text-center text-slate-500 mb-8">Placez les éléments importants sur les lignes ou les croisements (points forts), pas au centre !</p><h3 class="manga-title text-xl mb-4 text-center">L'ESPACE NÉGATIF (Le Blanc)</h3><div class="manga-panel p-6 bg-slate-100 text-center"><p class="text-sm font-bold mb-2">"La musique, c'est le silence entre les notes."</p><p class="text-sm">En design, c'est pareil. Laissez votre design <strong>respirer</strong>. L'espace vide n'est pas "vide", il met en valeur ce qui est plein.</p></div>` },
+            { title: "3. Science des Couleurs", subtitle: "RVB, CMJN & Psychologie", content: `<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"><div class="manga-panel p-4 bg-black text-white text-center"><h4 class="font-['Bangers'] text-2xl text-red-500">RVB (RGB)</h4><p class="text-xs font-bold mb-4">ÉCRAN / LUMIÈRE</p><div class="flex justify-center -space-x-4 mb-2"><div class="w-12 h-12 rounded-full bg-red-600 mix-screen opacity-90"></div><div class="w-12 h-12 rounded-full bg-green-600 mix-screen opacity-90"></div><div class="w-12 h-12 rounded-full bg-blue-600 mix-screen opacity-90"></div></div><p class="text-[10px] mt-2">Addition = BLANC. <br>Pour le Web, Mobile, Vidéo.</p></div><div class="manga-panel p-4 bg-white text-slate-900 text-center"><h4 class="font-['Bangers'] text-2xl text-cyan-500">CMJN (CMYK)</h4><p class="text-xs font-bold mb-4">IMPRESSION / ENCRE</p><div class="flex justify-center -space-x-4 mb-2"><div class="w-12 h-12 rounded-full bg-cyan-400 mix-multiply opacity-80"></div><div class="w-12 h-12 rounded-full bg-magenta-400 mix-multiply opacity-80"></div><div class="w-12 h-12 rounded-full bg-yellow-400 mix-multiply opacity-80"></div></div><p class="text-[10px] mt-2">Addition = NOIR (Gris). <br>Pour le Print, Affiches, Cartes.</p></div></div><h3 class="manga-title text-xl mb-4 text-center">HARMONIE DES COULEURS</h3><div class="space-y-2 text-sm"><div class="flex items-center gap-2"><div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-green-500 border border-black"></div> <strong>Analogues :</strong> Couleurs voisines (Douceur).</div><div class="flex items-center gap-2"><div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-orange-500 border border-black"></div> <strong>Complémentaires :</strong> Opposées sur le cercle (Contraste fort).</div><div class="flex items-center gap-2"><div class="w-6 h-6 bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 border border-black"></div> <strong>Triadiques :</strong> Triangle équilatéral (Dynamique).</div></div>` },
+            { title: "4. Typographie", subtitle: "Le pouvoir des lettres", content: `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div class="manga-panel p-6 bg-[#fdfbf7] text-center border-l-4 border-l-orange-900"><h4 class="font-['Playfair_Display'] text-5xl mb-2">Serif</h4><p class="text-xs font-bold uppercase tracking-widest text-orange-900">À Empattements</p><p class="text-sm mt-4 text-slate-600">Traditionnel, Sérieux, Luxe, Littéraire.</p><p class="text-[10px] mt-1 text-slate-400">Ex: Times New Roman, Garamond.</p></div><div class="manga-panel p-6 bg-white text-center border-l-4 border-l-blue-600"><h4 class="font-sans text-5xl font-bold mb-2">Sans</h4><p class="text-xs font-bold uppercase tracking-widest text-blue-600">Sans Empattements (Bâton)</p><p class="text-sm mt-4 text-slate-600">Moderne, Digital, Clean, Minimaliste.</p><p class="text-[10px] mt-1 text-slate-400">Ex: Arial, Roboto, Helvetica.</p></div></div><h3 class="manga-title text-xl mb-4 text-center">HIÉRARCHIE VISUELLE</h3><div class="manga-panel p-4 bg-white"><h1 class="text-3xl font-bold mb-1">Ceci est un Titre (H1)</h1><h2 class="text-xl font-semibold text-slate-600 mb-2">Ceci est un sous-titre (H2)</h2><p class="text-sm text-slate-500">Et ceci est le corps de texte. La hiérarchie permet de guider l'œil du lecteur du plus important au détail. On joue sur la <strong>taille</strong>, la <strong>graisse</strong> (bold) et la <strong>couleur</strong>.</p></div>` },
+            { title: "5. Logos & Identité", subtitle: "La signature de la marque", content: `<div class="mb-6"><p class="text-sm">Une identité visuelle n'est pas juste un logo. C'est un système (Couleurs, Typos, Formes).</p></div><h3 class="manga-title text-xl mb-4 text-center">LES TYPES DE LOGOS</h3><div class="grid grid-cols-2 gap-4 text-center text-xs"><div class="manga-panel p-3"><div class="text-2xl font-bold mb-1">Logotype</div><p class="text-slate-500">Le nom complet (Coca-Cola)</p></div><div class="manga-panel p-3"><div class="text-2xl font-bold mb-1">A</div><p class="text-slate-500">Monogramme (Initiale)</p></div><div class="manga-panel p-3"><i data-lucide="apple" class="w-8 h-8 mx-auto mb-1"></i><p class="text-slate-500">Pictogramme (Apple)</p></div><div class="manga-panel p-3"><div class="flex items-center justify-center gap-1 font-bold"><i data-lucide="zap" class="w-4 h-4"></i> ACME</div><p class="text-slate-500">Combiné (Texte + Picto)</p></div></div><div class="mt-8 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg"><h4 class="font-bold text-blue-800 mb-1">La Charte Graphique</h4><p class="text-sm text-blue-700">C'est le document de référence ("La Bible") qui explique comment utiliser le logo, quelles couleurs (Pantone/CMJN) utiliser, et les interdits, pour garder une cohérence partout.</p></div>` },
+            { title: "6. Lexique Technique", subtitle: "Le Codex du Graphiste", content: `<div class="mb-6"><p class="font-medium text-lg">Dictionnaire de survie du Concepteur UI.</p></div><div class="space-y-6"><div class="manga-panel p-4 bg-white border-l-4 border-slate-900"><h4 class="font-['Bangers'] text-xl mb-3 flex items-center gap-2"><i data-lucide="type" class="w-5 h-5"></i> TYPOGRAPHIE</h4><ul class="space-y-3 text-sm"><li><strong>Approche (Tracking) :</strong> Espacement global entre toutes les lettres d'un mot.</li><li><strong>Crénage (Kerning) :</strong> Ajustement de l'espace entre DEUX lettres spécifiques (ex: A et V).</li><li><strong>Interlignage (Leading) :</strong> Espace vertical entre deux lignes de texte.</li><li><strong>Plein et Délié :</strong> Contraste entre la partie épaisse (plein) et fine (délié) d'une lettre.</li></ul></div><div class="manga-panel p-4 bg-white border-l-4 border-slate-900"><h4 class="font-['Bangers'] text-xl mb-3 flex items-center gap-2"><i data-lucide="palette" class="w-5 h-5"></i> TECHNIQUE & COULEUR</h4><ul class="space-y-3 text-sm"><li><strong>CMJN (Cyan Magenta Jaune Noir) :</strong> Mode couleur pour l'IMPRESSION.</li><li><strong>RVB (Rouge Vert Bleu) :</strong> Mode couleur pour les ÉCRANS.</li><li><strong>Pantone :</strong> Système universel de couleurs normalisées (encres pures).</li><li><strong>Dégradé (Gradient) :</strong> Transition progressive entre deux couleurs.</li></ul></div><div class="manga-panel p-4 bg-white border-l-4 border-slate-900"><h4 class="font-['Bangers'] text-xl mb-3 flex items-center gap-2"><i data-lucide="layout" class="w-5 h-5"></i> COMPOSITION & CONCEPT</h4><ul class="space-y-3 text-sm"><li><strong>Espace Négatif (Blanc) :</strong> Zone vide autour d'un objet pour le mettre en valeur.</li><li><strong>Lignes de force :</strong> Lignes invisibles qui guident l'œil dans l'image.</li><li><strong>Responsive Design :</strong> Site web qui s'adapte automatiquement à la taille de l'écran (Mobile/PC).</li><li><strong>Storytelling :</strong> L'art de raconter une histoire pour communiquer un message.</li></ul></div></div>` }
+        ];
 
-        // --- GESTION MOBILE ---
-        function toggleMobileMenu() {
-            const sidebar = document.getElementById('main-sidebar');
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            
-            // Fermer l'autre menu si ouvert
-            if (!document.getElementById('sidebar-chapters').classList.contains('translate-x-full') && window.innerWidth < 1024) {
-                toggleMobileChapters();
+        // --- DONNEES BLOC 1 - MODULE 2 (PHOTOSHOP) ---
+        const bloc1_module2_chapters = [
+            {
+                title: "1. Les Fondamentaux",
+                subtitle: "Interface, Calques & Outils",
+                content: `
+                    <div class="mb-6"><p class="font-medium">Bienvenue dans la matrice. Avant de créer, il faut comprendre l'outil.</p></div>
+                    <div class="space-y-6">
+                        <div class="manga-panel p-5 bg-white">
+                            <h4 class="font-bold text-lg mb-2 text-blue-600 flex items-center gap-2"><i data-lucide="layers" class="w-5 h-5"></i> LES CALQUES (LAYERS)</h4>
+                            <p class="text-sm">Imaginez des feuilles de plastique transparentes empilées. Ce qui est en haut cache ce qui est en bas. C'est la base de tout montage non-destructif.</p>
+                        </div>
+                        <div class="manga-panel p-5 bg-white">
+                            <h4 class="font-bold text-lg mb-2 text-blue-600 flex items-center gap-2"><i data-lucide="scissors" class="w-5 h-5"></i> LE DÉTOURAGE (SÉLECTION)</h4>
+                            <ul class="text-sm list-disc pl-5 space-y-1">
+                                <li><strong>Baguette Magique :</strong> Sélectionne par couleur similaire (rapide mais imprécis).</li>
+                                <li><strong>Lasso / Plume :</strong> Sélection manuelle ultra-précise.</li>
+                                <li><strong>Sélection Sujet (IA) :</strong> L'intelligence artificielle détour le sujet principal en 1 clic.</li>
+                            </ul>
+                        </div>
+                        <div class="manga-panel p-5 bg-white">
+                            <h4 class="font-bold text-lg mb-2 text-blue-600">FORMATS CLÉS</h4>
+                            <ul class="text-sm list-disc pl-5">
+                                <li><strong>PSD :</strong> Fichier de travail (conserve les calques).</li>
+                                <li><strong>JPEG :</strong> Image compressée (perte de qualité, pas de transparence).</li>
+                                <li><strong>PNG :</strong> Image web (gère la transparence).</li>
+                                <li><strong>RAW :</strong> Négatif numérique (brut de capteur, à développer).</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "2. Retouche Pro",
+                subtitle: "Camera Raw, Masques & Filtres",
+                content: `
+                    <h3 class="manga-title text-xl mb-3 text-center">LE SECRET DES PROS : LE NON-DESTRUCTIF</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="manga-panel p-4 bg-green-50 border-green-300">
+                            <h4 class="font-bold text-green-800 mb-1">MASQUE DE FUSION</h4>
+                            <p class="text-xs">Ne jamais effacer (gomme) ! Utilisez un masque. <br><strong>Noir = Cache</strong>, <strong>Blanc = Révèle</strong>.</p>
+                        </div>
+                        <div class="manga-panel p-4 bg-blue-50 border-blue-300">
+                            <h4 class="font-bold text-blue-800 mb-1">OBJET DYNAMIQUE</h4>
+                            <p class="text-xs">Protège l'image originale. Vous pouvez redimensionner ou appliquer des filtres sans détruire les pixels d'origine.</p>
+                        </div>
+                    </div>
+                    <div class="manga-panel p-4 bg-white border-l-4 border-slate-900 mb-4">
+                        <h4 class="font-bold mb-1">Camera Raw</h4>
+                        <p class="text-sm text-slate-600">Le laboratoire de développement photo numérique. Permet de récupérer des détails dans les ombres et les lumières avant même d'ouvrir la photo dans Photoshop. C'est ici qu'on fait la "Balance des Blancs" et l'Exposition.</p>
+                    </div>
+                    <div class="manga-panel p-4 bg-white border-l-4 border-slate-900">
+                        <h4 class="font-bold mb-1">Filtres Neuronaux (IA)</h4>
+                        <p class="text-sm text-slate-600">Utilisent l'IA pour changer une expression de visage, coloriser une photo ancienne ou lisser la peau automatiquement.</p>
+                    </div>
+                `
+            },
+            {
+                title: "3. Web & UI Design",
+                subtitle: "Wireframes, Maquettes & Export",
+                content: `
+                    <div class="mb-4 text-sm font-bold bg-slate-100 p-2 rounded">Photoshop n'est pas que pour la photo, c'est aussi pour le design d'interface.</div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="layout-grid" class="w-5 h-5 text-purple-600 mt-1"></i>
+                            <div><strong>Plans de Travail (Artboards) :</strong> Comme sur Illustrator ou Figma, permet d'avoir plusieurs écrans (Mobile, Desktop) dans un seul fichier.</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="grid" class="w-5 h-5 text-purple-600 mt-1"></i>
+                            <div><strong>Grilles & Repères :</strong> Indispensables pour aligner les éléments au pixel près (Pixel Perfect).</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i data-lucide="download" class="w-5 h-5 text-purple-600 mt-1"></i>
+                            <div><strong>Exportation :</strong> Enregistrer pour le web (JPG/PNG compressé) pour que le site charge vite. On utilise souvent "Enregistrer pour le Web (Hérité)".</div>
+                        </li>
+                    </ul>
+                `
+            },
+            {
+                title: "4. Effets & Créativité",
+                subtitle: "Glitch, Double Expo & Animation",
+                content: `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="manga-panel p-3 text-center">
+                            <h4 class="font-['Bangers'] text-lg">GLITCH</h4>
+                            <p class="text-xs text-slate-500">Décalage des couches RVB pour un effet "bug informatique".</p>
+                        </div>
+                        <div class="manga-panel p-3 text-center">
+                            <h4 class="font-['Bangers'] text-lg">DOUBLE EXPO</h4>
+                            <p class="text-xs text-slate-500">Mélanger deux photos (ex: Portrait + Paysage) avec des modes de fusion.</p>
+                        </div>
+                        <div class="manga-panel p-3 text-center col-span-2">
+                            <h4 class="font-['Bangers'] text-lg">TIMELINE (ANIMATION)</h4>
+                            <p class="text-xs text-slate-500">Créer des GIFs simples ou des cinémagraphes directement dans Photoshop.</p>
+                        </div>
+                        <div class="manga-panel p-3 text-center col-span-2">
+                            <h4 class="font-['Bangers'] text-lg">EFFET PARALLAXE</h4>
+                            <p class="text-xs text-slate-500">Donner une impression de profondeur 3D en animant les plans à des vitesses différentes.</p>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "5. Dictionnaire Photoshop",
+                subtitle: "Tout le lexique technique",
+                content: `
+                    <div class="space-y-4 text-sm">
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Aplatir :</strong> Fusionner tous les calques en un seul (Destructif ! À faire à la toute fin).</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Masque d'écrêtage :</strong> Un calque prend la forme du calque situé juste en dessous (ex: une photo dans un rond).</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Détourage :</strong> Action de séparer un objet de son fond pour le rendre transparent.</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Opacité vs Fond :</strong> L'opacité gère la transparence de tout le calque. Le "Fond" gère la transparence des pixels mais garde les effets de style (contour, ombre) visibles.</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Mode de Fusion :</strong> Comment les pixels d'un calque interagissent avec ceux du dessous (ex: Produit pour assombrir, Superposition pour éclaircir).</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Calque de Réglage :</strong> Calque spécial qui modifie les couleurs/lumières de tout ce qui est en dessous sans toucher aux pixels d'origine.</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Pixels par pouce (ppp/dpi) :</strong> La résolution. 72 ppp pour écran, 300 ppp pour impression.</div>
+                        <div class="bg-white p-3 border-b-2 border-slate-100"><strong>Remplissage d'après contenu :</strong> Magie de Photoshop qui remplit un trou (après suppression d'un objet) en inventant de la matière cohérente avec l'image.</div>
+                    </div>
+                `
+            },
+            {
+                title: "6. Raccourcis Clavier",
+                subtitle: "Cheat Sheet (Vitesse x10)",
+                content: `
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">V</h4>
+                            <p class="text-xs">Outil Déplacement</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">M</h4>
+                            <p class="text-xs">Sélection Rectangulaire</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">B</h4>
+                            <p class="text-xs">Pinceau (Brush)</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">Ctrl + J</h4>
+                            <p class="text-xs">Dupliquer le calque</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">Ctrl + T</h4>
+                            <p class="text-xs">Transformation Manuelle</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">Ctrl + Z</h4>
+                            <p class="text-xs">Annuler</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">Ctrl + D</h4>
+                            <p class="text-xs">Désélectionner</p>
+                        </div>
+                        <div class="manga-panel p-3 group hover:bg-slate-900 hover:text-white transition-colors cursor-help">
+                            <h4 class="font-['Bangers'] text-2xl">Espace</h4>
+                            <p class="text-xs">Outil Main (Bouger)</p>
+                        </div>
+                    </div>
+                `
             }
+        ];
 
-            if (isClosed) {
-                sidebar.classList.remove('-translate-x-full');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-            }
-        }
-
-        function toggleMobileChapters() {
-            const sidebar = document.getElementById('sidebar-chapters');
-            const isClosed = sidebar.classList.contains('translate-x-full');
-
-            // Fermer l'autre menu si ouvert
-            if (!document.getElementById('main-sidebar').classList.contains('-translate-x-full') && window.innerWidth < 1024) {
-                toggleMobileMenu();
-            }
-
-            if (isClosed) {
-                sidebar.classList.remove('translate-x-full');
-            } else {
-                sidebar.classList.add('translate-x-full');
-            }
-        }
-
-        function closeAllMenus() {
-            if (window.innerWidth >= 1024) return; 
-            document.getElementById('main-sidebar').classList.add('-translate-x-full');
-            document.getElementById('sidebar-chapters').classList.add('translate-x-full');
-        }
-
-        function playSound() {
-            if (audioContext.state === 'suspended') audioContext.resume();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.1);
-        }
-
-        function playAvatarSound() {
-            const bubble = document.getElementById('avatar-bubble');
-            bubble.classList.remove('hidden');
-            setTimeout(() => bubble.classList.add('hidden'), 2000);
-            const audio = new Audio('vash.mp3');
-            audio.play().catch(e => { console.log("Son manquant (vash.mp3), pas grave !"); });
-        }
-
-        const module1_chapters = [
+        // --- DONNEES BLOC 2 (Marketing) ---
+        const module1_marketing_chapters = [
             { title: "1. Modèle Économique", subtitle: "Créer, délivrer et capturer de la valeur", content: `<div class="mb-8 p-4 border-l-4 border-slate-900 bg-yellow-50"><p class="font-bold text-lg text-slate-800">Il s'agit de comprendre comment une entreprise génère ses revenus. Voici les 4 modèles les plus courants :</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-blue-100 p-2 rounded-bl-xl"><i data-lucide="shopping-bag" class="text-blue-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">E-COMMERCE</h4><p class="text-sm">Vente directe de produits physiques ou numériques. <br><em>(Ex: Amazon, Fnac)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-green-100 p-2 rounded-bl-xl"><i data-lucide="repeat" class="text-green-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">ABONNEMENT</h4><p class="text-sm">Paiement récurrent pour un accès continu. <br><em>(Ex: Netflix, Spotify)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-purple-100 p-2 rounded-bl-xl"><i data-lucide="megaphone" class="text-purple-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">PUBLICITÉ</h4><p class="text-sm">Monétisation de l'audience et des données. <br><em>(Ex: Facebook, Google)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-orange-100 p-2 rounded-bl-xl"><i data-lucide="gift" class="text-orange-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">FREEMIUM</h4><p class="text-sm">Base gratuite + options payantes. <br><em>(Ex: LinkedIn, Jeux mobiles)</em></p></div></div>` },
             { title: "2. KPIs & Mesures", subtitle: "L'équation de la performance", content: `<p class="mb-6 font-medium">Pour mesurer le succès d'une interface, on utilise des indicateurs clés (KPI). Voici les formules essentielles :</p><div class="flex flex-col items-center mb-8 max-w-md mx-auto"><div class="w-full bg-slate-800 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">IMPRESSIONS (Vues)</div><div class="h-4 w-0.5 bg-black"></div><div class="w-[80%] bg-blue-600 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">CLICS (Intérêt)</div><div class="h-4 w-0.5 bg-black"></div><div class="w-[60%] bg-orange-500 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">CONVERSIONS (Achats)</div></div><div class="space-y-6"><div class="manga-panel p-6 border-l-8 border-l-blue-500"><h4 class="font-['Bangers'] text-2xl text-blue-700">CTR (Taux de Clics)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Clics / Impressions) x 100</div><p class="text-sm mt-2">Mesure l'attractivité visuelle d'un élément (bouton, bannière).</p></div><div class="manga-panel p-6 border-l-8 border-l-orange-500 transform scale-105 shadow-xl bg-orange-50"><h4 class="font-['Bangers'] text-2xl text-orange-600">CVR (Conversion) <span class="text-xs bg-white px-2 py-1 rounded border border-black ml-2">KPI ROI</span></h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Conversions / Clics) x 100</div><p class="text-sm mt-2 font-bold">L'indicateur principal pour l'UI Designer.</p><p class="text-sm">Il prouve que l'interface a réussi à convaincre l'utilisateur d'agir.</p></div><div class="manga-panel p-6 border-l-8 border-l-purple-500"><h4 class="font-['Bangers'] text-2xl text-purple-700">CPA (Coût par Acquisition)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">Dépenses Totales / Nouveaux Clients</div><p class="text-sm mt-2">Combien ça coûte réellement d'obtenir un client payant ? Indispensable pour la rentabilité.</p></div><div class="manga-panel p-6 border-l-8 border-l-green-500"><h4 class="font-['Bangers'] text-2xl text-green-700">ROI (Retour sur Investissement)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Gain - Coût) / Coût x 100</div><p class="text-sm mt-2">Le juge de paix final. Est-ce que la campagne a rapporté plus qu'elle n'a coûté ?</p></div></div>` },
             { title: "3. Le Site : Hub Central", subtitle: "Le cœur de la stratégie digitale", content: `<div class="relative w-full max-w-lg mx-auto h-64 bg-white border-4 border-slate-900 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-xl p-4 mb-8 flex items-center justify-center overflow-hidden"><div class="absolute inset-0 opacity-5" style="background: repeating-linear-gradient(90deg, #000 0, #000 1px, transparent 0, transparent 20px);"></div><div class="absolute w-full h-0.5 bg-slate-300 top-1/2 left-0 z-0"></div><div class="absolute h-full w-0.5 bg-slate-300 left-1/2 top-0 z-0"></div><div class="absolute z-10 w-32 h-32 bg-slate-900 text-white rounded-full flex flex-col items-center justify-center border-4 border-white shadow-xl"><i data-lucide="anchor" class="w-8 h-8 mb-1"></i><span class="font-['Bangers'] text-lg">SITE WEB</span></div><div class="absolute top-4 left-4 font-bold bg-white border-2 border-black px-3 py-1 text-xs z-10">RÉSEAUX</div><div class="absolute bottom-4 right-4 font-bold bg-white border-2 border-black px-3 py-1 text-xs z-10">EMAIL</div><div class="absolute top-4 right-4 font-bold bg-white border-2 border-black px-3 py-1 text-xs z-10">SEO/PUB</div><div class="absolute bottom-4 left-4 font-bold bg-white border-2 border-black px-3 py-1 text-xs z-10">OFFLINE</div></div><h3 class="manga-title text-2xl mb-4">La Bulle d'Expérience & Omnicanal</h3><div class="manga-panel p-6 bg-slate-50"><p class="mb-4 text-sm"><strong>Expérience Client (CX) :</strong> C'est la somme de toutes les émotions ressenties par le client. L'UI doit être cohérente partout.</p><p class="mb-4 text-sm"><strong>Multicanal :</strong> Utiliser plusieurs supports (web, mobile, email, boutique physique) pour diffuser un message.</p><p class="text-sm"><strong>Omnicanal :</strong> Fusion parfaite des canaux. <br><em>Exemple : J'achète sur l'appli mobile (UI Mobile), je retire en magasin (Expérience Physique).</em></p></div>` },
-            { title: "4. Veille Stratégique", subtitle: "PESTEL, SWOT & Mapping", content: `<h3 class="manga-title text-xl mb-3">1. Outils d'Analyse</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2 mb-2 text-indigo-700"><i data-lucide="globe"></i> PESTEL</h4><p class="text-xs text-slate-500 font-bold uppercase mb-2">Avant le projet</p><p class="text-sm">Analyse de l'environnement externe : Politique, Économique, Social, Technologique, Environnemental, Légal.</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2 mb-2 text-indigo-700"><i data-lucide="activity"></i> SWOT</h4><p class="text-xs text-slate-500 font-bold uppercase mb-2">Pendant le projet</p><p class="text-sm">Forces/Faiblesses (Interne) vs Opportunités/Menaces (Externe).</p></div></div><h3 class="manga-title text-xl mb-3">2. Mapping Concurrentiel</h3><div class="flex items-center gap-6 mb-8"><div class="relative w-48 h-48 bg-white border-2 border-black shadow-[4px_4px_0px_0px_#000]"><div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-300"></div><div class="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-300"></div><div class="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] font-bold">Cher</div><div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] font-bold">Pas cher</div><div class="absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-bold -rotate-90">Classique</div><div class="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold rotate-90">Moderne</div><div class="absolute top-6 right-6 w-3 h-3 bg-red-500 rounded-full border border-black" title="Concurrent A"></div><div class="absolute bottom-10 left-10 w-3 h-3 bg-blue-500 rounded-full border border-black" title="Concurrent B"></div><div class="absolute bottom-6 right-6 w-6 h-6 border-2 border-green-500 rounded-full border-dashed animate-ping"></div></div><div class="flex-1 text-sm"><p>Le mapping permet de visualiser le positionnement des concurrents pour trouver une <strong>place vide</strong> (opportunité) sur le marché.</p></div></div>` },
-            { title: "5. Sémantique & SEO", subtitle: "Analyse Lexicale & Mots-clés", content: `<div class="mb-6"><p>Le design ne suffit pas. Pour être visible, il faut utiliser les mots que les utilisateurs recherchent.</p></div><h3 class="manga-title text-xl mb-4">La Pyramide Sémantique</h3><div class="flex flex-col items-center justify-center space-y-1 w-full max-w-sm mx-auto mb-8 font-bold text-white text-sm"><div class="w-full bg-slate-800 p-3 text-center border-2 border-black relative group shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Génériques<span class="block text-[10px] font-normal opacity-70">"Chaussures" (Vol. Élevé / Conc. Forte)</span></div><div class="w-[85%] bg-slate-600 p-3 text-center border-2 border-black relative shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Précis<span class="block text-[10px] font-normal opacity-70">"Chaussures sport femme"</span></div><div class="w-[70%] bg-indigo-600 p-3 text-center border-2 border-black relative shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Longue Traîne<span class="block text-[10px] font-normal opacity-70">"Chaussures running rouges pas cher"</span><div class="absolute -right-24 top-2 text-indigo-700 text-xs font-bold w-20 hidden md:block">Conversion Max!</div></div></div><h3 class="manga-title text-xl mb-3">Les Outils d'Analyse</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="target" class="text-orange-500"></i> SEMRush / SpyFu</h4><p class="text-xs mt-2 text-slate-600">Permet de voir les mots-clés achetés (SEA) ou positionnés (SEO) par les concurrents.</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="pie-chart" class="text-blue-500"></i> SimilarWeb</h4><p class="text-xs mt-2 text-slate-600">Permet d'analyser les sources de trafic des concurrents (Viennent-ils des réseaux ? De Google ?).</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="lightbulb" class="text-yellow-500"></i> Ubersuggest</h4><p class="text-xs mt-2 text-slate-600">Outil idéal pour générer des idées de mots-clés et voir leur volume de recherche.</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="trending-up" class="text-blue-600"></i> Google Trends</h4><p class="text-xs mt-2 text-slate-600">Pour analyser la popularité d'un mot-clé dans le temps et par région (Saisonnalité).</p></div></div>` }
+            { title: "4. Veille Stratégique", subtitle: "PESTEL, SWOT & Mapping", content: `<h3 class="manga-title text-xl mb-4 text-center">1. PESTEL : L'ENVIRONNEMENT (MACRO)</h3><p class="text-sm text-center mb-6 text-slate-600">Cliquez ou survolez les cartes pour découvrir les 6 facteurs clés.</p><div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10"><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-blue-400">P</span><span class="text-xs font-bold">POLITIQUE</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Fiscalité, stabilité, aides.<br><strong class="text-blue-600">Ex:</strong> Aides à la digitalisation.</p></div></div></div><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-green-400">E</span><span class="text-xs font-bold">ÉCONOMIQUE</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Croissance, inflation, pouvoir d'achat.<br><strong class="text-green-600">Ex:</strong> Crise = Budget serré.</p></div></div></div><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-yellow-400">S</span><span class="text-xs font-bold">SOCIAL</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Démographie, modes, habitudes.<br><strong class="text-yellow-600">Ex:</strong> Hausse du mobile.</p></div></div></div><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-purple-400">T</span><span class="text-xs font-bold">TECHNO</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Innovations, R&D, Obsolescence.<br><strong class="text-purple-600">Ex:</strong> L'arrivée de l'IA.</p></div></div></div><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-emerald-400">E</span><span class="text-xs font-bold">ENVIRONNEMENT</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Climat, écologie, recyclage.<br><strong class="text-emerald-600">Ex:</strong> Eco-conception web.</p></div></div></div><div class="perspective-1000 h-32 cursor-pointer group hover-flip" onclick="togglePestelCard(this)"><div class="flip-card-inner relative w-full h-full transform-style-3d transition-transform duration-500"><div class="absolute inset-0 backface-hidden bg-slate-800 text-white border-2 border-black rounded-lg flex flex-col items-center justify-center shadow-[4px_4px_0px_0px_#cbd5e1]"><span class="font-['Bangers'] text-4xl text-red-400">L</span><span class="text-xs font-bold">LÉGAL</span></div><div class="absolute inset-0 backface-hidden bg-white border-2 border-black rounded-lg p-2 flex items-center justify-center text-center rotate-y-180 shadow-[4px_4px_0px_0px_#cbd5e1]"><p class="text-[10px] leading-tight">Lois, normes, droit du travail.<br><strong class="text-red-600">Ex:</strong> RGPD, Accessibilité.</p></div></div></div></div><h3 class="manga-title text-xl mb-4 text-center">2. LA MATRICE SWOT (MICRO)</h3><div class="relative bg-white border-4 border-black p-4 rounded-xl shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] max-w-lg mx-auto mb-10"><div class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-slate-100 px-2 rounded border border-slate-300">INTERNE (L'Entreprise)</div><div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold bg-slate-100 px-2 rounded border border-slate-300">EXTERNE (Le Marché)</div><div class="grid grid-cols-2 gap-2 mt-4 mb-4"><div class="group p-4 bg-green-50 border-2 border-green-200 hover:bg-green-100 transition-colors rounded text-center cursor-default h-32 flex flex-col justify-center"><h4 class="font-['Bangers'] text-xl text-green-700 mb-1">FORCES</h4><i data-lucide="biceps-flexed" class="w-6 h-6 mx-auto text-green-500 mb-1"></i><p class="text-[10px] text-green-800 hidden group-hover:block fade-in leading-tight">Ce que vous faites mieux que les autres.<br><em>(Ex: UI Rapide)</em></p></div><div class="group p-4 bg-red-50 border-2 border-red-200 hover:bg-red-100 transition-colors rounded text-center cursor-default h-32 flex flex-col justify-center"><h4 class="font-['Bangers'] text-xl text-red-700 mb-1">FAIBLESSES</h4><i data-lucide="alert-triangle" class="w-6 h-6 mx-auto text-red-500 mb-1"></i><p class="text-[10px] text-red-800 hidden group-hover:block fade-in leading-tight">Ce qui vous freine ou manque.<br><em>(Ex: Site lent)</em></p></div><div class="group p-4 bg-blue-50 border-2 border-blue-200 hover:bg-blue-100 transition-colors rounded text-center cursor-default h-32 flex flex-col justify-center"><h4 class="font-['Bangers'] text-xl text-blue-700 mb-1">OPPORTUNITÉS</h4><i data-lucide="trending-up" class="w-6 h-6 mx-auto text-blue-500 mb-1"></i><p class="text-[10px] text-blue-800 hidden group-hover:block fade-in leading-tight">Tendances positives du marché.<br><em>(Ex: La 5G)</em></p></div><div class="group p-4 bg-orange-50 border-2 border-orange-200 hover:bg-orange-100 transition-colors rounded text-center cursor-default h-32 flex flex-col justify-center"><h4 class="font-['Bangers'] text-xl text-orange-700 mb-1">MENACES</h4><i data-lucide="shield-alert" class="w-6 h-6 mx-auto text-orange-500 mb-1"></i><p class="text-[10px] text-orange-800 hidden group-hover:block fade-in leading-tight">Risques externes hors contrôle.<br><em>(Ex: Concurrent)</em></p></div></div></div><h3 class="manga-title text-xl mb-3 text-center">3. MAPPING CONCURRENTIEL</h3><div class="relative w-full max-w-lg mx-auto bg-slate-50 border-4 border-black p-4 rounded-xl shadow-[8px_8px_0px_0px_#000] mb-8"><div class="relative w-full h-64 bg-white border-2 border-slate-300 grid-bg"><div class="absolute inset-0" style="background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px); background-size: 20px 20px;"></div><div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-black z-10"></div><div class="absolute top-1/2 left-0 right-0 h-0.5 bg-black z-10"></div><div class="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1 border border-black text-[10px] font-bold z-20">PRIX ÉLEVÉ</div><div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white px-1 border border-black text-[10px] font-bold z-20">PRIX BAS</div><div class="absolute left-1 top-1/2 -translate-y-1/2 bg-white px-1 border border-black text-[10px] font-bold -rotate-90 z-20">CLASSIQUE</div><div class="absolute right-1 top-1/2 -translate-y-1/2 bg-white px-1 border border-black text-[10px] font-bold rotate-90 z-20">MODERNE</div><div class="absolute top-10 right-10 w-6 h-6 bg-red-500 rounded-full border-2 border-black z-30 cursor-pointer group hover:scale-125 transition-transform flex items-center justify-center"><span class="text-[8px] text-white font-bold">A</span><div class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded w-24 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Concurrent A<br><span class="text-[9px] text-slate-300">Cher & Moderne</span></div></div><div class="absolute bottom-12 left-12 w-6 h-6 bg-blue-500 rounded-full border-2 border-black z-30 cursor-pointer group hover:scale-125 transition-transform flex items-center justify-center"><span class="text-[8px] text-white font-bold">B</span><div class="absolute bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded w-24 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Concurrent B<br><span class="text-[9px] text-slate-300">Pas cher & Classique</span></div></div><div class="absolute bottom-8 right-16 w-8 h-8 bg-green-500 rounded-full border-2 border-black z-30 cursor-pointer animate-pulse group hover:scale-125 transition-transform flex items-center justify-center shadow-[0_0_15px_rgba(34,197,94,0.6)]"><i data-lucide="star" class="w-4 h-4 text-white"></i><div class="absolute bottom-10 left-1/2 -translate-x-1/2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded w-32 text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border-2 border-black">LA PLACE À PRENDRE<br><span class="text-[9px]">Accessible & Moderne</span></div></div></div><div class="mt-3 text-sm text-slate-700 bg-white p-2 rounded border border-slate-200"><strong>Légende :</strong> Placez les concurrents sur les axes. La zone vide (souvent <span class="text-green-600 font-bold">Moderne & Accessible</span>) est votre opportunité de marché.</div></div>` },
+            { title: "5. Sémantique & SEO", subtitle: "Analyse Lexicale & Mots-clés", content: `<div class="mb-6"><p class="Le design ne suffit pas. Pour être visible, il faut utiliser les mots que les utilisateurs recherchent.</p></div><h3 class="manga-title text-xl mb-4">La Pyramide Sémantique</h3><div class="flex flex-col items-center justify-center space-y-1 w-full max-w-sm mx-auto mb-8 font-bold text-white text-sm"><div class="w-full bg-slate-800 p-3 text-center border-2 border-black relative group shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Génériques<span class="block text-[10px] font-normal opacity-70">"Chaussures" (Vol. Élevé / Conc. Forte)</span></div><div class="w-[85%] bg-slate-600 p-3 text-center border-2 border-black relative shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Précis<span class="block text-[10px] font-normal opacity-70">"Chaussures sport femme"</span></div><div class="w-[70%] bg-indigo-600 p-3 text-center border-2 border-black relative shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">Longue Traîne<span class="block text-[10px] font-normal opacity-70">"Chaussures running rouges pas cher"</span><div class="absolute -right-24 top-2 text-indigo-700 text-xs font-bold w-20 hidden md:block">Conversion Max!</div></div></div><h3 class="manga-title text-xl mb-3">Les Outils d'Analyse</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="target" class="text-orange-500"></i> SEMRush / SpyFu</h4><p class="text-xs mt-2 text-slate-600">Permet de voir les mots-clés achetés (SEA) ou positionnés (SEO) par les concurrents.</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="pie-chart" class="text-blue-500"></i> SimilarWeb</h4><p class="text-xs mt-2 text-slate-600">Permet d'analyser les sources de trafic des concurrents (Viennent-ils des réseaux ? De Google ?).</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="lightbulb" class="text-yellow-500"></i> Ubersuggest</h4><p class="text-xs mt-2 text-slate-600">Outil idéal pour générer des idées de mots-clés et voir leur volume de recherche.</p></div><div class="manga-panel p-4 bg-white"><h4 class="font-bold flex items-center gap-2"><i data-lucide="trending-up" class="text-blue-600"></i> Google Trends</h4><p class="text-xs mt-2 text-slate-600">Pour analyser la popularité d'un mot-clé dans le temps et par région (Saisonnalité).</p></div></div>` },
+            { title: "6. De l'Intention au Sujet", subtitle: "Psychologie de Recherche & Outils", content: `<h3 class="manga-title text-2xl mb-4 text-center">1. COMPRENDRE LA RECHERCHE (LE POURQUOI)</h3><div class="manga-panel p-6 bg-white mb-8"><div class="flex items-center gap-4 mb-4"><i data-lucide="search" class="w-10 h-10 text-slate-900"></i><div><h4 class="font-['Bangers'] text-xl">LE MÉCANISME DU BESOIN</h4><p class="text-sm font-bold text-slate-600">"Un besoin est toujours tapé dans la barre de recherche."</p></div></div><p class="text-sm text-slate-700">Derrière chaque mot-clé se cache une <strong>intention</strong> (un problème à résoudre). Notre contenu ne doit pas être une simple vitrine, mais la <strong>SOLUTION</strong> à ce problème.</p></div><div class="manga-panel p-6 bg-orange-50 border-orange-200 mb-8 relative"><div class="absolute -top-3 -right-3 bg-orange-500 text-white px-3 py-1 text-xs font-bold border-2 border-black rotate-3">CONCEPT CLÉ</div><h4 class="font-['Bangers'] text-2xl text-orange-700 mb-2">LE ZMOT (Zero Moment of Truth)</h4><p class="text-sm font-bold mb-2">"Le moment de vérité avant même que les gens se connaissent."</p><p class="text-sm text-slate-700">C'est l'étape critique où l'utilisateur cherche de l'info (avis, tutos) <strong>AVANT</strong> d'acheter. C'est ici que la marque rencontre son futur client. Si tu n'es pas là, tu as perdu.</p></div><h3 class="manga-title text-2xl mb-4 text-center">2. TROUVER LES SUJETS (LE COMMENT)</h3><div class="grid grid-cols-1 gap-4"><div class="manga-panel p-4 bg-white flex items-start gap-4"><div class="bg-green-100 p-3 rounded border-2 border-black flex-shrink-0"><i data-lucide="help-circle" class="w-6 h-6 text-green-700"></i></div><div><h4 class="font-bold text-lg">AnswerThePublic</h4><p class="text-xs text-slate-500 font-bold uppercase mb-1">Générateur de questions</p><p class="text-sm text-slate-700">Il vous dit exactement ce que les gens demandent à Google (Qui ? Quoi ? Où ?). Idéal pour trouver des titres pertinents.</p></div></div><div class="manga-panel p-4 bg-white flex items-start gap-4"><div class="bg-blue-100 p-3 rounded border-2 border-black flex-shrink-0"><i data-lucide="library" class="w-6 h-6 text-blue-700"></i></div><div><h4 class="font-bold text-lg">Scoop.it</h4><p class="text-xs text-slate-500 font-bold uppercase mb-1">Curateur & Veille</p><p class="text-sm text-slate-700">Une bibliothèque personnelle intelligente. Sert à archiver ("Read later") et découvrir du contenu qu'on aurait loupé.</p></div></div><div class="manga-panel p-4 bg-white flex items-start gap-4"><div class="bg-red-100 p-3 rounded border-2 border-black flex-shrink-0"><i data-lucide="bell" class="w-6 h-6 text-red-700"></i></div><div><h4 class="font-bold text-lg">Google Alerts</h4><p class="text-xs text-slate-500 font-bold uppercase mb-1">Radar automatique</p><p class="text-sm text-slate-700">Vous recevez un email dès qu'un mot-clé choisi est mentionné quelque part sur le web.</p></div></div></div>` },
+            { title: "7. Contenus & Canaux", subtitle: "Le Carburant de la Stratégie", content: `<div class="mb-6"><p class="font-medium text-lg">"Le contenu est le carburant, la communication est le véhicule."</p></div><h3 class="manga-title text-xl mb-4 text-center">1. LA PYRAMIDE DES CONTENUS</h3><div class="flex flex-col gap-4 mb-8 max-w-lg mx-auto"><div class="manga-panel p-4 bg-red-50 border-red-200 relative"><div class="absolute -top-3 -left-3 bg-red-500 text-white w-8 h-8 flex items-center justify-center font-bold border-2 border-black rounded-full">1</div><h4 class="font-['Bangers'] text-xl text-red-700">CONTENU CHAUD (SNACKING) 🍟</h4><p class="text-xs font-bold mb-1">Durée de vie : Très courte (24-48h)</p><p class="text-sm">Posts réseaux, Stories, Tweets. <br><strong>But :</strong> Capter l'attention immédiate, divertir.</p></div><div class="manga-panel p-4 bg-blue-50 border-blue-200 relative w-[110%] -ml-[5%]"><div class="absolute -top-3 -left-3 bg-blue-500 text-white w-8 h-8 flex items-center justify-center font-bold border-2 border-black rounded-full">2</div><h4 class="font-['Bangers'] text-xl text-blue-700">CONTENU FROID (STOCK) 🧊</h4><p class="text-xs font-bold mb-1">Durée de vie : Longue (Années)</p><p class="text-sm">Articles de blog, Pages piliers. <br><strong>But :</strong> SEO, prouver l'expertise, éduquer.</p></div><div class="manga-panel p-4 bg-purple-50 border-purple-200 relative w-[120%] -ml-[10%]"><div class="absolute -top-3 -left-3 bg-purple-500 text-white w-8 h-8 flex items-center justify-center font-bold border-2 border-black rounded-full">3</div><h4 class="font-['Bangers'] text-xl text-purple-700">CONTENU PREMIUM (LEAD MAGNET) 💎</h4><p class="text-xs font-bold mb-1">Durée de vie : Stratégique</p><p class="text-sm">Livres blancs, Webinaires. <br><strong>But :</strong> Convertir (récupérer un email), fidéliser.</p></div></div><h3 class="manga-title text-xl mb-4 text-center">2. LA MATRICE DES CANAUX</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"><div class="manga-panel p-3 bg-white flex items-center gap-3"><div class="bg-slate-100 p-2 rounded border-2 border-black"><i data-lucide="file-text" class="w-6 h-6 text-slate-700"></i></div><div><h4 class="font-bold">Le Blog</h4><p class="text-xs text-slate-500">Roi du SEO. Travail sur la typo & lecture.</p></div></div><div class="manga-panel p-3 bg-white flex items-center gap-3"><div class="bg-red-100 p-2 rounded border-2 border-black"><i data-lucide="video" class="w-6 h-6 text-red-600"></i></div><div><h4 class="font-bold">Vidéo (YT)</h4><p class="text-xs text-slate-500">Format le + consommé. Humanise la marque.</p></div></div><div class="manga-panel p-3 bg-white flex items-center gap-3"><div class="bg-purple-100 p-2 rounded border-2 border-black"><i data-lucide="mic" class="w-6 h-6 text-purple-600"></i></div><div><h4 class="font-bold">Podcast</h4><p class="text-xs text-slate-500">Intimité & Mobilité. Importance du visuel Cover.</p></div></div><div class="manga-panel p-3 bg-white flex items-center gap-3"><div class="bg-yellow-100 p-2 rounded border-2 border-black"><i data-lucide="mail" class="w-6 h-6 text-yellow-600"></i></div><div><h4 class="font-bold">Newsletter</h4><p class="text-xs text-slate-500">Lien direct. Fidélisation pure.</p></div></div></div><h3 class="manga-title text-xl mb-4 text-center">3. LE RECYCLAGE (CONTENT REPURPOSING)</h3><div class="manga-panel p-4 bg-slate-50 border-dashed border-2 border-slate-400"><p class="text-center text-sm font-bold mb-4">Une idée intelligente : Découper une "Pièce Mère" en morceaux.</p><div class="flex flex-col items-center"><div class="bg-red-600 text-white font-bold px-4 py-2 rounded border-2 border-black shadow-md mb-2">VIDÉO YOUTUBE (10min)</div><i data-lucide="arrow-down" class="w-6 h-6 text-slate-400 mb-2"></i><div class="grid grid-cols-2 gap-2 w-full"><div class="bg-white border border-black p-2 text-center text-xs rounded">Podcast (Audio)</div><div class="bg-white border border-black p-2 text-center text-xs rounded">Article (Texte)</div><div class="bg-white border border-black p-2 text-center text-xs rounded">Reels (Extraits)</div><div class="bg-white border border-black p-2 text-center text-xs rounded">Insta (Citation)</div></div></div></div>` }
         ];
 
-        const modules = {
-            0: { title: "Module 1 : Marketing", subtitle: "STRATÉGIE & ANALYSE", chapters: module1_chapters },
-            1: { title: "Module 2 : Brand Content", subtitle: "EN CONSTRUCTION", chapters: [] }
-        };
-
-        const flashcards_m1 = [
-            { q: "Qu'est-ce que le modèle Freemium ?", a: "Un service de base gratuit avec des options 'Premium' payantes (ex: LinkedIn)." },
-            { q: "Quelle est la formule du CTR ?", a: "(Clics / Impressions) x 100" },
-            { q: "Quelle est la formule du CVR (Conversion) ?", a: "(Conversions / Clics) x 100" },
-            { q: "Définition du CPA ?", a: "Coût par Acquisition = Dépenses Totales / Nouveaux Clients" },
-            { q: "Qu'est-ce que le ROI ?", a: "Retour sur Investissement = (Gain - Coût) / Coût x 100" },
-            { q: "Différence Multicanal vs Omnicanal ?", a: "Multicanal = plusieurs supports séparés.\nOmnicanal = supports interconnectés sans rupture." },
-            { q: "À quoi sert l'analyse PESTEL ?", a: "Analyser l'environnement externe (Politique, Eco...) AVANT un projet." },
-            { q: "À quoi sert l'analyse SWOT ?", a: "Analyser les Forces/Faiblesses (Interne) et Opportunités/Menaces (Externe)." },
-            { q: "Qu'est-ce qu'une requête 'Longue Traîne' ?", a: "Une phrase clé précise (ex: 'chaussures rouges pas cher'). Faible volume mais forte conversion." },
-            { q: "À quoi sert SEMRush ?", a: "Espionner les mots-clés (SEO/SEA) des concurrents." }
+        // --- STRUCTURE DES BLOCS ---
+        const blocsData = [
+            {
+                id: 1,
+                title: "Bloc 1 : Design Graphique",
+                shortTitle: "Bloc 1 : Design",
+                icon: "palette",
+                color: "pink",
+                badge: null,
+                modules: [
+                    { id: 0, title: "Module 1", subtitle: "Culture Graphique", chapters: bloc1_chapters },
+                    { id: 3, title: "Module 2", subtitle: "Maîtrise Photoshop", chapters: bloc1_module2_chapters }
+                ]
+            },
+            {
+                id: 2,
+                title: "Bloc 2 : Marketing Digital",
+                shortTitle: "Bloc 2 : Marketing",
+                icon: "rocket",
+                color: "orange",
+                badge: "EN COURS",
+                modules: [
+                    { id: 1, title: "Module 1", subtitle: "Stratégie & Analyse", chapters: module1_marketing_chapters },
+                    { id: 2, title: "Module 2", subtitle: "Brand Content", chapters: [] }
+                ]
+            },
+            {
+                id: 3,
+                title: "Bloc 3 : Gestion de Projet",
+                shortTitle: "Bloc 3 : Gestion",
+                icon: "kanban-square",
+                color: "cyan",
+                badge: "NON DÉBLOQUÉ",
+                modules: [],
+                locked: true
+            }
         ];
 
-        const quizBank_m1 = [
-            { q: "Quel modèle économique repose sur la vente d'espace aux annonceurs ?", o: ["Abonnement", "Freemium", "Publicité", "E-commerce"], a: 2 },
-            { q: "Quel KPI mesure l'attractivité visuelle d'un bouton ?", o: ["ROI", "CTR", "CPA", "CVR"], a: 1 },
-            { q: "Quelle est la formule du Taux de Conversion (CVR) ?", o: ["Clics / Impressions", "Achats / Clics", "Gain - Coût", "Dépenses / Clients"], a: 1 },
-            { q: "Dans la stratégie digitale, le site web est considéré comme...", o: ["Une simple vitrine", "Le Hub Central", "Un canal secondaire", "Une option"], a: 1 },
-            { q: "L'analyse PESTEL s'effectue idéalement...", o: ["Avant le projet", "Pendant le projet", "Après le projet", "Jamais"], a: 0 },
-            { q: "Que signifie le 'S' dans SWOT ?", o: ["Strategy", "Strengths (Forces)", "Social", "Search"], a: 1 },
-            { q: "Le 'Freemium' c'est...", o: ["Tout gratuit", "Tout payant", "Gratuit avec options payantes", "Un abonnement mensuel"], a: 2 },
-            { q: "Quel outil permet d'analyser les tendances de recherche ?", o: ["SEMRush", "Google Trends", "SimilarWeb", "Photoshop"], a: 1 },
-            { q: "Une requête 'Longue Traîne' (SEO) est...", o: ["Générique et courte", "Précise et longue", "Peu efficace", "Très concurrentielle"], a: 1 },
-            { q: "Le ROI mesure...", o: ["Le trafic", "La rentabilité", "Les clics", "L'expérience utilisateur"], a: 1 },
-            { q: "Quelle est la différence entre Multicanal et Omnicanal ?", o: ["C'est pareil", "Omnicanal = sans rupture", "Multicanal = plus cher", "Omnicanal = web seulement"], a: 1 },
-            { q: "LinkedIn utilise principalement quel modèle ?", o: ["E-commerce", "Donations", "Freemium", "Vente au détail"], a: 2 },
-            { q: "Si je veux espionner les mots-clés d'un concurrent, j'utilise...", o: ["Google Trends", "SEMRush", "Paint", "Outlook"], a: 1 },
-            { q: "Le Mapping Concurrentiel permet de...", o: ["Copier les autres", "Trouver une place vide", "Dessiner une carte", "Calculer le prix"], a: 1 },
-            { q: "Le coût pour acquérir un nouveau client s'appelle...", o: ["CPC", "CPA", "CPM", "CTR"], a: 1 }
-        ];
-
-        let currentModuleId = 0;
+        // ETATS
+        let currentActiveBlocId = 1; 
+        let currentModuleGlobalId = 3; 
         let currentChapterIndex = 0;
-        let currentFlashcardIndex = 0;
-        let isFlipped = false;
-        let currentQuizQuestions = [];
-        let currentQuestionIndex = 0;
-        let score = 0;
 
-        function switchModule(moduleId) {
-            currentModuleId = moduleId;
+        // --- RENDERING SIDEBAR ---
+        function renderSidebar() {
+            const nav = document.getElementById('blocs-nav');
+            nav.innerHTML = '';
+
+            blocsData.forEach(bloc => {
+                if (bloc.id === currentActiveBlocId) {
+                    // --- ACTIVE BLOC (PANEL) ---
+                    let modulesHtml = '';
+                    bloc.modules.forEach(mod => {
+                        const isActiveModule = mod.id === currentModuleGlobalId;
+                        const opacityClass = isActiveModule ? '' : 'opacity-70 hover:opacity-100';
+                        const colorClass = isActiveModule ? `group-hover:text-${bloc.color}-600` : `group-hover:text-${bloc.color}-600`;
+                        const dotClass = isActiveModule ? `bg-slate-900` : `border-2 border-slate-300`;
+                        
+                        modulesHtml += `
+                            <div onclick="playSound(); switchModule(${mod.id}); closeAllMenus()" 
+                                 class="cursor-pointer group flex items-center gap-3 nav-item p-1 rounded hover:bg-slate-50 ${opacityClass}">
+                                <div class="w-2 h-2 rounded-full transition-colors ${dotClass}"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold ${colorClass} transition-colors">${mod.title}</p>
+                                    <p class="text-[10px] font-medium text-slate-500">${mod.subtitle}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    const badgeHtml = bloc.badge ? 
+                        `<div class="absolute -top-3 -right-3 bg-${bloc.color}-500 text-white text-xs font-['Bangers'] px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-3">${bloc.badge}</div>` 
+                        : '';
+
+                    nav.innerHTML += `
+                        <div class="manga-panel p-4 rounded-xl bg-white relative">
+                            ${badgeHtml}
+                            <div class="flex items-center gap-3 mb-4 text-slate-900 border-b-2 border-slate-100 pb-2">
+                                <i data-lucide="${bloc.icon}" class="w-6 h-6 flex-shrink-0 text-${bloc.color}-600"></i>
+                                <span class="font-['Bangers'] text-xl tracking-wide">${bloc.shortTitle}</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${modulesHtml}
+                            </div>
+                        </div>
+                    `;
+
+                } else {
+                    // --- INACTIVE BLOC ---
+                    const badgeHtml = bloc.badge ? 
+                        `<span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">${bloc.badge}</span>` 
+                        : '';
+                    
+                    const clickAction = bloc.locked ? 
+                        `loadConstruction('${bloc.title}'); closeAllMenus()` : 
+                        `setActiveBloc(${bloc.id})`;
+
+                    nav.innerHTML += `
+                        <div onclick="playSound(); ${clickAction}" class="group cursor-pointer nav-item">
+                            <div class="flex items-center gap-3 p-2 ${bloc.locked ? 'opacity-60' : ''}">
+                                <div class="p-2 border-2 border-slate-900 bg-${bloc.color}-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                                    <i data-lucide="${bloc.icon}" class="w-5 h-5 text-slate-900"></i>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-sm block uppercase">${bloc.shortTitle}</span>
+                                    ${badgeHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            lucide.createIcons();
+        }
+
+        function setActiveBloc(blocId) {
+            currentActiveBlocId = blocId;
+            const bloc = blocsData.find(b => b.id === blocId);
+            if (bloc && bloc.modules.length > 0) {
+                switchModule(bloc.modules[0].id);
+            } else {
+                renderSidebar();
+                loadConstruction(bloc.title);
+            }
+        }
+
+        function switchModule(moduleGlobalId) {
+            currentModuleGlobalId = moduleGlobalId;
             currentChapterIndex = 0;
-            const currentModData = modules[moduleId];
             
-            document.getElementById('header-title').innerText = currentModData.title;
-            document.getElementById('header-subtitle').innerHTML = `<span class="w-3 h-3 bg-${moduleId===0?'green':'orange'}-500 border-2 border-black"></span> ${currentModData.subtitle}`;
+            let currentModData = null;
+            let parentBloc = null;
+
+            for (const bloc of blocsData) {
+                const mod = bloc.modules.find(m => m.id === moduleGlobalId);
+                if (mod) {
+                    currentModData = mod;
+                    parentBloc = bloc;
+                    break;
+                }
+            }
+            
+            if (!currentModData) return;
+
+            if (parentBloc.id !== currentActiveBlocId) {
+                currentActiveBlocId = parentBloc.id;
+            }
+
+            renderSidebar();
+
+            document.getElementById('header-title').innerText = currentModData.title + " : " + currentModData.subtitle;
+            const chapterCount = currentModData.chapters.length;
+            const plural = chapterCount > 1 ? 'S' : '';
+            const subtitleText = chapterCount > 0 ? `${chapterCount} CHAPITRE${plural} DISPONIBLE${plural}` : "EN CONSTRUCTION";
+            document.getElementById('header-subtitle').innerHTML = `<span class="w-3 h-3 bg-${parentBloc.color}-500 border-2 border-black"></span> ${subtitleText}`;
 
             const sidebar = document.getElementById('chapters-list');
             sidebar.innerHTML = '';
             
             if (currentModData.chapters.length > 0) {
-                // FIX: Toujours réafficher le container des chapitres quand on charge un module
                 document.getElementById('sidebar-chapters').classList.remove('hidden');
-                
                 sidebar.innerHTML = `<h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-4 px-2 font-mono">SOMMAIRE</h3>`;
                 currentModData.chapters.forEach((chap, index) => {
+                    let displayTitle = chap.title;
+                    if (displayTitle.match(/^\d+\./)) { displayTitle = displayTitle.split('. ')[1]; }
+                    
                     sidebar.innerHTML += `
                         <button onclick="loadChapter(${index}); closeAllMenus()" id="btn-${index}" class="btn-manga w-full text-left p-3 rounded bg-white hover:bg-slate-100 mb-2 flex items-center gap-3 group">
-                            <span class="w-6 h-6 bg-slate-900 text-white flex items-center justify-center font-bold text-xs border border-black">${index + 1}</span>
-                            <span class="text-sm font-bold truncate">${chap.title.split('. ')[1]}</span>
+                            <span class="w-6 h-6 bg-slate-900 text-white flex items-center justify-center font-bold text-xs border border-black flex-shrink-0">${index + 1}</span>
+                            <span class="text-sm font-bold truncate">${displayTitle}</span>
                         </button>
                     `;
                 });
@@ -397,13 +665,18 @@
 
         function loadChapter(index) {
             currentChapterIndex = index;
-            const data = modules[currentModuleId].chapters[index];
+            let currentModData = null;
+            for (const bloc of blocsData) {
+                const mod = bloc.modules.find(m => m.id === currentModuleGlobalId);
+                if (mod) { currentModData = mod; break; }
+            }
+            if(!currentModData) return;
+
+            const data = currentModData.chapters[index];
             const container = document.getElementById('course-content');
 
-            // FIX: Assurer que la sidebar est visible (cas retour Quiz)
             document.getElementById('sidebar-chapters').classList.remove('hidden');
 
-            // Active State
             document.querySelectorAll('#chapters-list .btn-manga').forEach((btn, i) => {
                 if(i === index) btn.classList.add('active');
                 else btn.classList.remove('active');
@@ -419,7 +692,7 @@
                         <div class="leading-relaxed text-base lg:text-lg text-slate-700 font-medium">${data.content}</div>
                         <div class="mt-12 flex justify-between items-center pt-8 border-t-2 border-slate-100">
                             <button onclick="loadChapter(${Math.max(0, index - 1)}); document.getElementById('course-content').scrollTo(0,0)" class="text-slate-500 hover:text-slate-900 font-bold ${index === 0 ? 'invisible' : ''}">← PRÉCÉDENT</button>
-                            <button onclick="loadChapter(${Math.min(modules[currentModuleId].chapters.length - 1, index + 1)}); document.getElementById('course-content').scrollTo(0,0)" class="btn-manga bg-orange-500 text-white px-6 py-2 rounded flex items-center gap-2 hover:bg-orange-600 ${index === modules[currentModuleId].chapters.length - 1 ? 'hidden' : ''}">
+                            <button onclick="loadChapter(${Math.min(currentModData.chapters.length - 1, index + 1)}); document.getElementById('course-content').scrollTo(0,0)" class="btn-manga bg-orange-500 text-white px-6 py-2 rounded flex items-center gap-2 hover:bg-orange-600 ${index === currentModData.chapters.length - 1 ? 'hidden' : ''}">
                                 SUIVANT <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -448,155 +721,9 @@
             lucide.createIcons();
         }
 
-        function startFlashcards() {
-            if (currentModuleId === 1) { alert("Pas de flashcards disponibles !"); return; }
-            
-            // Masquer la sidebar pour donner plus d'espace
-            document.getElementById('sidebar-chapters').classList.add('hidden');
-            
-            currentFlashcardIndex = 0;
-            isFlipped = false;
-            const container = document.getElementById('course-content');
-            container.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center fade-in p-4">
-                    <div class="mb-6 text-center"><h2 class="text-3xl lg:text-4xl font-['Bangers'] text-slate-900 mb-2">FLASHCARDS</h2><p class="font-bold text-slate-500">Clique pour retourner la carte</p></div>
-                    <div class="perspective-1000 w-full max-w-lg h-64 lg:h-80 cursor-pointer group" onclick="flipCard()">
-                        <div id="flashcard-inner" class="flip-card-inner relative w-full h-full transform-style-3d shadow-xl transition-all duration-500">
-                            <div class="absolute w-full h-full backface-hidden bg-slate-900 text-white rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center shadow-[8px_8px_0px_0px_#cbd5e1]">
-                                <span class="absolute top-4 left-4 text-xs font-bold text-yellow-400 border border-yellow-400 px-2 py-1 rounded">QUESTION</span>
-                                <h3 id="fc-question" class="text-xl lg:text-2xl font-bold font-['Bangers'] tracking-wide">...</h3><i data-lucide="rotate-cw" class="w-6 h-6 mt-6 text-slate-500 animate-pulse"></i>
-                            </div>
-                            <div class="absolute w-full h-full backface-hidden bg-white text-slate-900 rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center rotate-y-180 shadow-[8px_8px_0px_0px_#cbd5e1]">
-                                <span class="absolute top-4 left-4 text-xs font-bold text-green-600 border border-green-600 px-2 py-1 rounded">RÉPONSE</span>
-                                <p id="fc-answer" class="text-base lg:text-lg font-bold">...</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-10 flex gap-6 items-center">
-                        <button onclick="event.stopPropagation(); prevCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
-                        <span id="fc-counter" class="font-['Bangers'] text-xl">1 / 10</span>
-                        <button onclick="event.stopPropagation(); nextCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-right" class="w-6 h-6"></i></button>
-                    </div>
-                    <button onclick="switchModule(0)" class="mt-8 text-slate-500 hover:text-slate-900 font-bold underline text-sm">Quitter</button>
-                </div>
-            `;
-            updateCardContent();
-            lucide.createIcons();
-        }
-
-        function flipCard() {
-            const card = document.getElementById('flashcard-inner');
-            isFlipped = !isFlipped;
-            card.style.transform = isFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
-        }
-
-        function nextCard() {
-            if (currentFlashcardIndex < flashcards_m1.length - 1) { currentFlashcardIndex++; resetFlipAndUpdate(); }
-        }
-        function prevCard() {
-            if (currentFlashcardIndex > 0) { currentFlashcardIndex--; resetFlipAndUpdate(); }
-        }
-        function resetFlipAndUpdate() {
-            isFlipped = false;
-            document.getElementById('flashcard-inner').style.transform = "rotateY(0deg)";
-            setTimeout(updateCardContent, 200);
-        }
-        function updateCardContent() {
-            const data = flashcards_m1[currentFlashcardIndex];
-            document.getElementById('fc-question').innerText = data.q;
-            document.getElementById('fc-answer').innerText = data.a;
-            document.getElementById('fc-counter').innerText = `${currentFlashcardIndex + 1} / ${flashcards_m1.length}`;
-        }
-
-        function startQuiz() {
-            if (currentModuleId === 1) { alert("Pas de quiz disponible !"); return; }
-            
-            // Masquer la sidebar pour le Quiz
-            document.getElementById('sidebar-chapters').classList.add('hidden');
-            
-            const shuffled = [...quizBank_m1].sort(() => 0.5 - Math.random());
-            currentQuizQuestions = shuffled.slice(0, 10);
-            currentQuestionIndex = 0;
-            score = 0;
-            const container = document.getElementById('course-content');
-            container.innerHTML = `
-                <div id="quiz-container" class="max-w-2xl mx-auto h-full flex flex-col justify-center fade-in p-4">
-                    <div class="mb-6 flex justify-between items-end border-b-4 border-slate-900 pb-4">
-                        <h2 class="text-3xl lg:text-4xl font-['Bangers'] text-slate-900">DUEL QUIZ</h2>
-                        <span class="text-lg lg:text-xl font-bold font-mono bg-slate-900 text-white px-3 py-1 transform -skew-x-12">Question <span id="q-num">1</span>/10</span>
-                    </div>
-                    <div class="manga-panel p-6 lg:p-8 bg-white mb-6 relative">
-                        <div class="absolute -top-4 -left-4 bg-orange-500 w-8 h-8 border-2 border-black"></div>
-                        <h3 id="q-text" class="text-xl lg:text-2xl font-bold text-slate-800 mb-6 min-h-[80px] flex items-center">Chargement...</h3>
-                        <div id="q-options" class="grid grid-cols-1 gap-3"></div>
-                    </div>
-                    <button id="next-btn" onclick="nextQuestion()" class="btn-manga bg-indigo-600 text-white py-3 text-xl w-full hidden">QUESTION SUIVANTE →</button>
-                </div>
-            `;
-            showQuestion();
-        }
-
-        function showQuestion() {
-            const q = currentQuizQuestions[currentQuestionIndex];
-            document.getElementById('q-num').innerText = currentQuestionIndex + 1;
-            document.getElementById('q-text').innerText = q.q;
-            document.getElementById('next-btn').classList.add('hidden');
-            const optionsContainer = document.getElementById('q-options');
-            optionsContainer.innerHTML = '';
-            q.o.forEach((opt, index) => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 border-2 border-slate-200 hover:border-slate-900 hover:bg-slate-50 font-bold transition-all rounded text-slate-700 quiz-option relative overflow-hidden";
-                btn.onclick = () => checkAnswer(index, q.a, btn);
-                btn.innerHTML = `<span class="inline-block w-6 font-mono opacity-50 mr-2">${['A','B','C','D'][index]}.</span> ${opt}`;
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        function checkAnswer(selectedIndex, correctIndex, btnElement) {
-            const allBtns = document.querySelectorAll('.quiz-option');
-            allBtns.forEach(b => b.disabled = true);
-            if (selectedIndex === correctIndex) {
-                score++;
-                btnElement.classList.add('bg-green-100', 'border-green-600', 'text-green-800');
-                btnElement.innerHTML += ` <i data-lucide="check" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 w-6 h-6"></i>`;
-            } else {
-                btnElement.classList.add('bg-red-100', 'border-red-600', 'text-red-800');
-                allBtns[correctIndex].classList.add('bg-green-100', 'border-green-600', 'text-green-800');
-            }
-            lucide.createIcons();
-            document.getElementById('next-btn').classList.remove('hidden');
-        }
-
-        function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < 10) { showQuestion(); } else { showResults(); }
-        }
-
-        function showResults() {
-            let message = "", color = "red";
-            if (score >= 8) { message = "LÉGENDAIRE ! 🏆"; color = "yellow"; }
-            else if (score >= 5) { message = "PAS MAL DU TOUT ! 👍"; color = "blue"; }
-            else { message = "ENCORE UN EFFORT ! 💪"; color = "slate"; }
-            const container = document.getElementById('course-content');
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full fade-in text-center p-4">
-                    <div class="manga-panel p-10 bg-white max-w-lg w-full">
-                        <h2 class="text-5xl font-['Bangers'] mb-2">RÉSULTAT</h2>
-                        <div class="text-6xl font-black text-indigo-600 mb-4">${score} / 10</div>
-                        <p class="text-xl font-bold text-slate-500 mb-8 border-t-2 border-slate-100 pt-4">${message}</p>
-                        <div class="flex gap-4 justify-center">
-                            <button onclick="startQuiz()" class="btn-manga bg-slate-900 text-white px-6 py-3">REJOUER ↺</button>
-                            <!-- FIX: Utiliser switchModule pour restaurer l'état normal -->
-                            <button onclick="switchModule(0)" class="btn-manga bg-white text-slate-900 px-6 py-3">COURS</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
         // Init avec DOM Ready pour sécurité
         document.addEventListener('DOMContentLoaded', () => {
-            switchModule(0);
+            switchModule(3); // Charge le Module Photoshop par défaut
         });
     </script>
 </body>
