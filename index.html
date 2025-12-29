@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Reviz - Cours UI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        body { font-family: 'Outfit', sans-serif; }
+        
+        /* Glassmorphism de base */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-sidebar {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Styles pour les schémas */
+        .schema-box {
+            background: white;
+            border: 2px dashed #e2e8f0;
+            border-radius: 1rem;
+        }
+
+        /* Scrollbar propre */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Animation de transition de contenu */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Onglet actif */
+        .chapter-btn.active {
+            background: #eff6ff;
+            color: #4f46e5;
+            border-right: 3px solid #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen overflow-hidden flex selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- ARRIÈRE-PLAN DÉCORATIF -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-200/40 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-200/40 rounded-full blur-[100px]"></div>
+    </div>
+
+    <!-- 1. BARRE LATÉRALE GAUCHE (Navigation Blocs) -->
+    <aside class="w-20 lg:w-72 glass-sidebar z-20 flex flex-col justify-between h-full transition-all duration-300 flex-shrink-0">
+        <div class="p-4 lg:p-6">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 mb-8 lg:mb-10 text-indigo-900 justify-center lg:justify-start">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 flex-shrink-0">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-xl hidden lg:block tracking-tight">Reviz UI</span>
+            </div>
+
+            <!-- Menu Blocs -->
+            <nav class="space-y-6">
+                
+                <!-- BLOC 1 (Fermé) -->
+                <div>
+                    <div class="group flex items-center gap-3 p-2 rounded-lg text-slate-400 cursor-not-allowed hover:bg-slate-50/50 transition-colors justify-center lg:justify-start opacity-70">
+                        <i data-lucide="lock" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="font-bold text-sm hidden lg:block uppercase tracking-wider">Bloc 1 : Design</span>
+                    </div>
+                </div>
+
+                <!-- BLOC 2 (Ouvert & Hiérarchisé) -->
+                <div class="bg-white/40 rounded-2xl p-2 border border-white/50 shadow-sm">
+                    <!-- Titre Bloc -->
+                    <div class="flex items-center gap-3 p-2 mb-2 text-indigo-900 justify-center lg:justify-start">
+                        <i data-lucide="rocket" class="w-5 h-5 flex-shrink-0 text-indigo-600"></i>
+                        <span class="font-bold text-sm hidden lg:block uppercase tracking-wider">Bloc 2 : Marketing</span>
+                    </div>
+
+                    <!-- Liste Modules -->
+                    <div class="space-y-1">
+                        <!-- Module 1 (Actif) -->
+                        <div class="relative flex items-center gap-3 p-2.5 rounded-xl bg-white shadow-sm border border-indigo-100 text-indigo-700 cursor-pointer hover:bg-indigo-50 transition-all justify-center lg:justify-start group">
+                            <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full"></div>
+                            <span class="lg:hidden text-xs font-bold">M1</span>
+                            <div class="hidden lg:block">
+                                <p class="text-xs font-bold leading-tight">Module 1</p>
+                                <p class="text-[10px] text-slate-500 truncate">Stratégie & Analyse</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 text-indigo-400 hidden lg:block"></i>
+                        </div>
+
+                        <!-- Module 2 (Futur) -->
+                        <div class="flex items-center gap-3 p-2.5 rounded-xl text-slate-500 hover:bg-white/50 transition-colors cursor-pointer border border-transparent hover:border-slate-200 justify-center lg:justify-start group">
+                            <span class="lg:hidden text-xs font-bold opacity-50">M2</span>
+                            <div class="hidden lg:block opacity-60 group-hover:opacity-100 transition-opacity">
+                                <p class="text-xs font-bold leading-tight flex items-center gap-2">
+                                    Module 2 <i data-lucide="clock" class="w-3 h-3"></i>
+                                </p>
+                                <p class="text-[10px] truncate">Digital Brand Content</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOC 3 (Fermé) -->
+                <div>
+                    <div class="group flex items-center gap-3 p-2 rounded-lg text-slate-400 cursor-not-allowed hover:bg-slate-50/50 transition-colors justify-center lg:justify-start opacity-70">
+                        <i data-lucide="lock" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="font-bold text-sm hidden lg:block uppercase tracking-wider">Bloc 3 : Gestion</span>
+                    </div>
+                </div>
+
+            </nav>
+        </div>
+
+        <!-- Profil Utilisateur -->
+        <div class="p-4 m-4 bg-white/50 rounded-2xl border border-white/60 flex items-center gap-3 justify-center lg:justify-start">
+            <img src="https://i.pinimg.com/1200x/83/d6/ea/83d6ea6a371c54dd6cabcf55554ecc6a.jpg" alt="Angélique" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md flex-shrink-0">
+            <div class="hidden lg:block overflow-hidden">
+                <p class="text-sm font-bold text-slate-800 truncate">Angélique</p>
+                <div class="w-full bg-slate-200 h-1.5 rounded-full mt-1">
+                    <div class="bg-green-500 h-full w-[35%] rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 2. ZONE DE CONTENU PRINCIPALE -->
+    <main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden">
+        
+        <!-- Header -->
+        <header class="h-20 bg-white/40 backdrop-blur-md border-b border-white/50 px-8 flex items-center justify-between flex-shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-slate-800">Module 1 : Stratégie & Marketing Digital</h1>
+                <p class="text-sm text-slate-500 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span> 5 Chapitres disponibles
+                </p>
+            </div>
+            <div class="flex gap-3">
+                <button class="px-4 py-2 bg-indigo-600 rounded-lg text-sm font-medium text-white hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 flex items-center gap-2">
+                    <i data-lucide="play-circle" class="w-4 h-4"></i> Quiz Rapide
+                </button>
+            </div>
+        </header>
+
+        <!-- Corps du cours (Split View) -->
+        <div class="flex-1 flex overflow-hidden">
+            
+            <!-- Sommaire (Navigation Chapitres) -->
+            <div class="w-72 bg-white/30 border-r border-white/50 overflow-y-auto p-4 space-y-2 hidden md:block">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-2">Sommaire du cours</h3>
+                
+                <button onclick="loadChapter(0)" id="btn-0" class="chapter-btn active w-full text-left p-3 rounded-lg hover:bg-white/60 transition-all flex items-start gap-3 group">
+                    <span class="flex-shrink-0 w-6 h-6 rounded bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Modèle Économique</p>
+                        <p class="text-xs text-slate-500 mt-1">Les bases du digital</p>
+                    </div>
+                </button>
+
+                <button onclick="loadChapter(1)" id="btn-1" class="chapter-btn w-full text-left p-3 rounded-lg hover:bg-white/60 transition-all flex items-start gap-3 group">
+                    <span class="flex-shrink-0 w-6 h-6 rounded bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">2</span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Webmarketing (KPI)</p>
+                        <p class="text-xs text-slate-500 mt-1">L'équation du succès</p>
+                    </div>
+                </button>
+
+                <button onclick="loadChapter(2)" id="btn-2" class="chapter-btn w-full text-left p-3 rounded-lg hover:bg-white/60 transition-all flex items-start gap-3 group">
+                    <span class="flex-shrink-0 w-6 h-6 rounded bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">3</span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Site Cœur du Système</p>
+                        <p class="text-xs text-slate-500 mt-1">Expérience & Multicanal</p>
+                    </div>
+                </button>
+
+                <button onclick="loadChapter(3)" id="btn-3" class="chapter-btn w-full text-left p-3 rounded-lg hover:bg-white/60 transition-all flex items-start gap-3 group">
+                    <span class="flex-shrink-0 w-6 h-6 rounded bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">4</span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Veille Stratégique</p>
+                        <p class="text-xs text-slate-500 mt-1">PESTEL, SWOT & Terrain</p>
+                    </div>
+                </button>
+
+                <button onclick="loadChapter(4)" id="btn-4" class="chapter-btn w-full text-left p-3 rounded-lg hover:bg-white/60 transition-all flex items-start gap-3 group">
+                    <span class="flex-shrink-0 w-6 h-6 rounded bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center mt-0.5">5</span>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-indigo-700">Trouver sa Sémantique</p>
+                        <p class="text-xs text-slate-500 mt-1">SEO & Outils</p>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Zone de Lecture du Cours -->
+            <div class="flex-1 overflow-y-auto bg-white/40 p-8 lg:p-12 relative" id="course-content">
+                <!-- LE CONTENU SERA INJECTÉ ICI PAR JAVASCRIPT -->
+            </div>
+
+        </div>
+    </main>
+
+    <!-- JAVASCRIPT POUR GÉRER LE CONTENU -->
+    <script>
+        lucide.createIcons();
+
+        // DONNÉES DU COURS (Mises à jour avec tes textes)
+        const chapters = [
+            // CHAPITRE 1
+            {
+                title: "1. Modèle Économique du Digital",
+                subtitle: "Créer, délivrer et capturer de la valeur",
+                content: `
+                    <div class="prose max-w-none text-slate-600 mb-8">
+                        <p class="mb-4 text-lg">Il s'agit de comprendre comment une entreprise crée, délivre et capture de la valeur via le numérique. Voici les modèles les plus courants :</p>
+                    </div>
+
+                    <!-- Schéma Modèles Éco -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <!-- E-commerce -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center hover:-translate-y-1 transition-transform">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600"><i data-lucide="shopping-bag"></i></div>
+                            <h4 class="font-bold text-slate-800">E-Commerce</h4>
+                            <p class="text-xs text-slate-500 mt-2">Vente directe de produits physiques ou numériques en ligne.</p>
+                        </div>
+                        
+                        <!-- Abonnement -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center hover:-translate-y-1 transition-transform">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 text-green-600"><i data-lucide="repeat"></i></div>
+                            <h4 class="font-bold text-slate-800">L'Abonnement</h4>
+                            <p class="text-xs text-slate-500 mt-2">Paiement régulier pour un service (ex: Netflix, Spotify).</p>
+                        </div>
+                        
+                        <!-- Publicité -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center hover:-translate-y-1 transition-transform">
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 text-purple-600"><i data-lucide="megaphone"></i></div>
+                            <h4 class="font-bold text-slate-800">Modèle Publicitaire</h4>
+                            <p class="text-xs text-slate-500 mt-2">Vente d'espaces publicitaires ou de données d'audience.</p>
+                        </div>
+                        
+                        <!-- Freemium -->
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 text-center hover:-translate-y-1 transition-transform">
+                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 text-orange-600"><i data-lucide="gift"></i></div>
+                            <h4 class="font-bold text-slate-800">Freemium</h4>
+                            <p class="text-xs text-slate-500 mt-2">Service de base gratuit avec des options "Premium" payantes.</p>
+                        </div>
+                    </div>
+                `
+            },
+
+            // CHAPITRE 2
+            {
+                title: "2. Le Webmarketing en équation",
+                subtitle: "Les indicateurs clés de performance (KPI)",
+                content: `
+                    <p class="text-slate-600 mb-6">Pour mesurer le succès d'une interface, on utilise des indicateurs clés (KPI). Voici les formules essentielles à connaître :</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        
+                        <!-- CTR -->
+                        <div class="schema-box p-6 bg-blue-50/50 border-blue-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-bold text-blue-800">Taux de Clics (CTR)</h4>
+                                <i data-lucide="mouse-pointer-2" class="text-blue-400"></i>
+                            </div>
+                            <div class="font-mono bg-white px-3 py-2 rounded border border-blue-200 text-blue-600 text-sm mb-2 text-center">
+                                (Clics / Impressions) x 100
+                            </div>
+                            <p class="text-xs text-slate-600">Il mesure l'attractivité d'un élément visuel.</p>
+                        </div>
+
+                        <!-- CVR -->
+                        <div class="schema-box p-6 bg-indigo-50/50 border-indigo-100 transform scale-105 shadow-md">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-bold text-indigo-800">Taux de Conversion (CVR)</h4>
+                                <i data-lucide="check-circle" class="text-indigo-500"></i>
+                            </div>
+                            <div class="font-mono bg-white px-3 py-2 rounded border border-indigo-200 text-indigo-600 text-sm mb-2 text-center font-bold">
+                                (Conversions / Clics) x 100
+                            </div>
+                            <p class="text-xs text-slate-600"><strong>L'indicateur Roi pour l'UI</strong> : il montre si l'interface a réussi à faire agir l'utilisateur.</p>
+                        </div>
+
+                        <!-- CPA -->
+                        <div class="schema-box p-6 bg-slate-50 border-slate-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-bold text-slate-700">CPA (Coût par Acquisition)</h4>
+                                <i data-lucide="user-plus" class="text-slate-400"></i>
+                            </div>
+                            <div class="font-mono bg-white px-3 py-2 rounded border border-slate-200 text-slate-600 text-sm mb-2 text-center">
+                                Dépenses totales / Nouveaux clients
+                            </div>
+                        </div>
+
+                        <!-- ROI -->
+                        <div class="schema-box p-6 bg-green-50/50 border-green-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-bold text-green-800">ROI (Retour sur Investissement)</h4>
+                                <i data-lucide="trending-up" class="text-green-500"></i>
+                            </div>
+                            <div class="font-mono bg-white px-3 py-2 rounded border border-green-200 text-green-600 text-sm mb-2 text-center">
+                                Gain de l'investissement / Coût
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            // CHAPITRE 3
+            {
+                title: "3. Votre site : Le cœur du système",
+                subtitle: "Bulle d'Expérience & Multicanal",
+                content: `
+                    <p class="text-slate-600 mb-6">En marketing digital, le site web n'est pas seulement une vitrine, c'est la pierre angulaire de la stratégie.</p>
+
+                    <!-- Schéma Hub -->
+                    <div class="relative w-full max-w-lg mx-auto h-64 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mb-8 flex items-center justify-center">
+                        <!-- Centre -->
+                        <div class="absolute z-10 w-28 h-28 bg-indigo-600 rounded-full flex flex-col items-center justify-center text-white shadow-xl shadow-indigo-200 animate-pulse">
+                            <i data-lucide="layout" class="w-6 h-6 mb-1"></i>
+                            <span class="font-bold text-xs">SITE WEB</span>
+                            <span class="text-[8px] uppercase tracking-wide">Point d'Ancrage</span>
+                        </div>
+                        <!-- Satellites -->
+                        <div class="absolute top-2 left-1/2 -translate-x-1/2 text-center"><i data-lucide="mail" class="text-slate-400 mb-1"></i><div class="text-[10px] font-bold">Email</div></div>
+                        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 text-center"><i data-lucide="share-2" class="text-slate-400 mt-1"></i><div class="text-[10px] font-bold">Social</div></div>
+                        <div class="absolute left-2 top-1/2 -translate-y-1/2 text-center"><i data-lucide="search" class="text-slate-400 mr-1"></i><div class="text-[10px] font-bold">SEO</div></div>
+                        <div class="absolute right-2 top-1/2 -translate-y-1/2 text-center"><i data-lucide="shopping-bag" class="text-slate-400 ml-1"></i><div class="text-[10px] font-bold">Physique</div></div>
+                        <!-- Orbite -->
+                        <div class="absolute border border-dashed border-slate-300 rounded-full w-48 h-48 opacity-50"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-sm">
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <strong class="text-indigo-700 block mb-1">Ancrage</strong>
+                            Point d'arrivée de tous les canaux (sociaux, pubs, emails).
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <strong class="text-indigo-700 block mb-1">Conversion</strong>
+                            Transformer un visiteur en client ou prospect (lead).
+                        </div>
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <strong class="text-indigo-700 block mb-1">Données</strong>
+                            Collecter des infos sur le comportement pour optimiser l'UI.
+                        </div>
+                    </div>
+
+                    <h3 class="font-bold text-xl text-slate-800 mb-4 mt-8">La "Bulle d'Expérience" et le Multicanal</h3>
+                    <div class="space-y-4">
+                        <div class="flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600 flex-shrink-0"><i data-lucide="heart"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">Expérience Client (CX)</h4>
+                                <p class="text-sm text-slate-600">C'est la somme de toutes les interactions et émotions. Pour vous, l'UI doit être cohérente partout.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0"><i data-lucide="layers"></i></div>
+                            <div>
+                                <h4 class="font-bold text-slate-800">Multicanal vs Omnicanal</h4>
+                                <p class="text-sm text-slate-600">
+                                    <strong>Multicanal :</strong> Plusieurs supports (web, mobile).<br>
+                                    <strong>Omnicanal :</strong> Tout est interconnecté sans rupture (ex: achat en ligne, retrait magasin).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                        <p class="text-sm text-yellow-800"><strong>Note Métier UI :</strong> Vous devez comprendre ces mécaniques. Votre design doit servir ces objectifs (ex: placer un bouton là où il boostera la conversion).</p>
+                    </div>
+                `
+            },
+
+            // CHAPITRE 4
+            {
+                title: "4. Veille Stratégique & Terrain",
+                subtitle: "Cadre stratégique, Mapping & Observation",
+                content: `
+                    <p class="text-slate-600 mb-6">Faire un état des lieux avant de lancer un projet est crucial. On n'invente rien, on améliore.</p>
+
+                    <!-- PESTEL & SWOT -->
+                    <h3 class="font-bold text-lg mb-4 text-slate-800">1. Le Cadre Stratégique</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                        <div class="border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors">
+                            <h4 class="font-bold text-indigo-700 flex items-center gap-2 mb-2"><i data-lucide="globe"></i> PESTEL</h4>
+                            <p class="text-xs font-bold uppercase text-slate-400 mb-2">Si le projet n'existe pas encore</p>
+                            <p class="text-sm text-slate-600">On analyse l'environnement global (Politique, Éco, Social, Techno, Environnement, Légal).</p>
+                            <p class="text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded"><em>Ex UI : Une loi sur l'accessibilité m'oblige-t-elle à adapter mon contraste ?</em></p>
+                        </div>
+                        
+                        <div class="border border-slate-200 rounded-xl p-4 hover:border-indigo-300 transition-colors">
+                            <h4 class="font-bold text-indigo-700 flex items-center gap-2 mb-2"><i data-lucide="activity"></i> SWOT</h4>
+                            <p class="text-xs font-bold uppercase text-slate-400 mb-2">Si le projet existe déjà</p>
+                            <div class="grid grid-cols-2 gap-1 text-[10px] text-center mb-2">
+                                <span class="bg-green-100 text-green-800 rounded px-1">Forces (Int)</span>
+                                <span class="bg-red-100 text-red-800 rounded px-1">Faiblesses (Int)</span>
+                                <span class="bg-blue-100 text-blue-800 rounded px-1">Opportunités (Ext)</span>
+                                <span class="bg-orange-100 text-orange-800 rounded px-1">Menaces (Ext)</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded"><em>Ex UI : Appli rapide (Force) mais design vieux (Faiblesse).</em></p>
+                        </div>
+                    </div>
+
+                    <!-- Mapping -->
+                    <h3 class="font-bold text-lg mb-4 text-slate-800">2. Le Mapping & Leviers</h3>
+                    <div class="flex flex-col md:flex-row gap-6 mb-8 items-center">
+                        <div class="flex-1">
+                            <p class="text-sm text-slate-600 mb-4"><strong>Leviers concurrentiels :</strong> Pourquoi choisir ce site ? (Prix, Service, UI facile...).</p>
+                            <p class="text-sm text-slate-600"><strong>Mapping :</strong> Graphique à 2 axes pour placer les concurrents et voir les places vides.</p>
+                        </div>
+                        <!-- Mini graphique mapping -->
+                        <div class="w-40 h-40 border-l-2 border-b-2 border-slate-300 relative bg-slate-50">
+                            <div class="absolute -left-6 top-1/2 -rotate-90 text-[10px] font-bold text-slate-400">PRIX</div>
+                            <div class="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400">DESIGN</div>
+                            <!-- Points -->
+                            <div class="absolute top-4 right-4 w-3 h-3 bg-red-400 rounded-full" title="Concurrent A"></div>
+                            <div class="absolute bottom-4 left-4 w-3 h-3 bg-blue-400 rounded-full" title="Concurrent B"></div>
+                            <div class="absolute top-1/2 left-1/2 w-4 h-4 border-2 border-indigo-600 rounded-full animate-ping"></div>
+                        </div>
+                    </div>
+
+                    <!-- Veille Terrain -->
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2"><i data-lucide="eye"></i> La Veille de Terrain (Concrète)</h4>
+                        <ul class="space-y-3 text-sm text-slate-600">
+                            <li class="flex gap-2">
+                                <i data-lucide="smartphone" class="w-4 h-4 text-slate-400 mt-0.5"></i>
+                                <span><strong>Réseaux sociaux :</strong> Analysez le ton employé et les visuels.</span>
+                            </li>
+                            <li class="flex gap-2">
+                                <i data-lucide="search" class="w-4 h-4 text-slate-400 mt-0.5"></i>
+                                <span><strong>Googlez vos expressions :</strong> Qui sort en premier ? Cliquez et analysez leur UI. Est-ce beau ? Facile ? Qu'est-ce qui vous énerve ?</span>
+                            </li>
+                        </ul>
+                        <div class="mt-4 pt-4 border-t border-slate-100 text-indigo-700 text-sm font-bold text-center">
+                            "La veille ne sert pas à copier, mais à faire mieux."
+                        </div>
+                    </div>
+                `
+            },
+
+            // CHAPITRE 5 (Anciennement "Trouver sa Sémantique", enrichi avec le texte SEO)
+            {
+                title: "5. Analyse Technique & Lexicale (SEO)",
+                subtitle: "Espionner les mots-clés",
+                content: `
+                    <p class="text-slate-600 mb-6">Le prof explique ici comment "espionner" les mots-clés que les concurrents utilisent pour attirer des clients.</p>
+
+                    <!-- Concept Champs Lexicaux -->
+                    <div class="bg-slate-800 text-white p-6 rounded-xl mb-8 relative overflow-hidden">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+                        <h4 class="font-bold text-lg mb-2 flex items-center gap-2"><i data-lucide="message-square"></i> Champs Lexicaux Communs</h4>
+                        <p class="text-sm opacity-80 mb-4">Ce sont les mots que tous les gens du métier utilisent.</p>
+                        <div class="bg-white/10 p-3 rounded-lg text-sm border border-white/20">
+                            <strong>Exemple :</strong> Pour un site de voyage, parlent-ils de <span class="text-yellow-300">"séjours déstockés"</span> ou de <span class="text-yellow-300">"voyages de luxe"</span> ?
+                        </div>
+                    </div>
+
+                    <!-- Outils -->
+                    <h3 class="font-bold text-lg mb-4 text-slate-800">Les Outils d'Espionnage</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        <div class="bg-white p-5 rounded-xl border border-orange-100 shadow-sm">
+                            <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 mb-3"><i data-lucide="target"></i></div>
+                            <h4 class="font-bold text-slate-800">SEMRush & Spyfu</h4>
+                            <p class="text-xs text-slate-500 mt-2">Pour voir sur quels mots-clés vos concurrents paient des pubs ou apparaissent en premier sur Google.</p>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-blue-100 shadow-sm">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 mb-3"><i data-lucide="pie-chart"></i></div>
+                            <h4 class="font-bold text-slate-800">SimilarWeb</h4>
+                            <p class="text-xs text-slate-500 mt-2">Pour voir d'où vient le trafic (Réseaux sociaux ? Google ? Sites partenaires ?).</p>
+                        </div>
+                    </div>
+
+                    <!-- Rappel Schéma Entonnoir (Gardé pour le contexte SEO) -->
+                    <div class="opacity-70 transform scale-95 origin-top">
+                        <h4 class="font-bold text-sm text-slate-400 mb-2 uppercase text-center">Rappel structure Mots-clés</h4>
+                        <div class="flex flex-col items-center justify-center space-y-1 w-full max-w-xs mx-auto">
+                            <div class="w-full bg-slate-300 text-white p-2 rounded-t text-center text-xs">Génériques</div>
+                            <div class="w-[80%] bg-slate-400 text-white p-2 text-center text-xs">Précis</div>
+                            <div class="w-[60%] bg-indigo-400 text-white p-2 rounded-b text-center text-xs">Longue Traîne</div>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        function loadChapter(index) {
+            const container = document.getElementById('course-content');
+            const data = chapters[index];
+
+            // Update Boutons
+            document.querySelectorAll('.chapter-btn').forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                    btn.classList.remove('hover:bg-white/60');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('hover:bg-white/60');
+                }
+            });
+
+            // Inject Content with Animation
+            container.innerHTML = `
+                <div class="fade-in max-w-3xl mx-auto">
+                    <span class="inline-block px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold mb-4">Chapitre ${index + 1}</span>
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">${data.title}</h2>
+                    <p class="text-xl text-slate-500 font-light mb-8 border-b border-slate-200 pb-6">${data.subtitle}</p>
+                    
+                    <div class="leading-relaxed">
+                        ${data.content}
+                    </div>
+
+                    <div class="mt-12 flex justify-between items-center pt-8 border-t border-slate-200">
+                        <button onclick="loadChapter(${Math.max(0, index - 1)})" class="text-slate-500 hover:text-indigo-600 text-sm font-medium ${index === 0 ? 'invisible' : ''}">
+                            ← Précédent
+                        </button>
+                        <button onclick="loadChapter(${Math.min(chapters.length - 1, index + 1)})" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 ${index === chapters.length - 1 ? 'hidden' : ''}">
+                            Suivant →
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Re-render Icons
+            lucide.createIcons();
+        }
+
+        // Charger le premier chapitre au démarrage
+        loadChapter(0);
+
+    </script>
+</body>
+</html>
