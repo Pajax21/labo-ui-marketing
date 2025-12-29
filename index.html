@@ -29,20 +29,19 @@
             transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
 
-        .manga-panel:hover {
+        .manga-panel:not(.no-lift):hover {
             transform: translate(-2px, -2px);
             box-shadow: 8px 8px 0px 0px #0f172a;
         }
-
-        /* Classe pour désactiver l'effet "levé" au survol */
-        .manga-panel.no-lift:hover {
-            transform: none;
-            box-shadow: 6px 6px 0px 0px #0f172a;
-        }
-
-        .manga-panel:active {
+        
+        .manga-panel:not(.no-lift):active {
             transform: translate(2px, 2px);
             box-shadow: 2px 2px 0px 0px #0f172a;
+        }
+
+        .manga-panel.no-lift {
+            transform: none !important;
+            box-shadow: 6px 6px 0px 0px #0f172a !important;
         }
 
         .manga-sidebar {
@@ -95,130 +94,95 @@
             transform: translateX(5px);
         }
 
-        /* --- FLASHCARDS 3D --- */
+        /* FLASHCARDS 3D */
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
-        
-        .flip-card-inner {
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .flip-card.flipped .flip-card-inner {
-            transform: rotateY(180deg);
-        }
+        .flip-card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #0f172a; border-radius: 4px; border: 2px solid #f0f4f8; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="text-slate-800 h-screen overflow-hidden flex selection:bg-black selection:text-white">
+<body class="text-slate-800 h-screen overflow-hidden flex selection:bg-black selection:text-white relative">
 
-    <!-- 1. BARRE LATÉRALE -->
-    <aside class="w-20 lg:w-80 manga-sidebar z-20 flex flex-col justify-between h-full flex-shrink-0 relative">
+    <!-- 1. BARRE LATÉRALE GAUCHE (NAVIGATION) -->
+    <aside id="main-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 lg:w-80 manga-sidebar transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 flex flex-col justify-between h-full flex-shrink-0 bg-white shadow-2xl lg:shadow-none">
         
         <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 50%); background-size: 10px 10px;"></div>
 
         <div class="p-4 lg:p-6 relative z-10 flex flex-col h-full overflow-y-auto">
-            <!-- Logo -->
-            <div class="flex items-center gap-3 mb-8 justify-center lg:justify-start flex-shrink-0">
-                <div class="w-12 h-12 bg-slate-900 text-white border-2 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(255,100,0,1)] transform -rotate-3">
-                    <span class="font-['Bangers'] text-2xl">R</span>
+            <!-- Logo + Bouton Fermer Mobile -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 lg:w-12 lg:h-12 bg-slate-900 text-white border-2 border-black flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(255,100,0,1)] transform -rotate-3">
+                        <span class="font-['Bangers'] text-xl lg:text-2xl">R</span>
+                    </div>
+                    <span class="font-['Bangers'] text-2xl lg:text-3xl tracking-wide">Reviz <span class="text-orange-600">UI</span></span>
                 </div>
-                <span class="font-['Bangers'] text-3xl hidden lg:block tracking-wide">Reviz <span class="text-orange-600">UI</span></span>
+                <button onclick="toggleMobileMenu()" class="lg:hidden p-2 text-slate-500 hover:text-red-500 bg-slate-100 rounded-lg border-2 border-transparent hover:border-slate-900"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
             <!-- Menu Blocs -->
             <nav class="space-y-6 flex-1">
-                
                 <!-- BLOC 1 -->
-                <div onclick="loadConstruction('Bloc 1 : Design Graphique')" class="group cursor-pointer nav-item">
-                    <div class="flex items-center gap-3 p-2 justify-center lg:justify-start opacity-60">
-                        <div class="p-2 border-2 border-slate-900 bg-pink-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                            <i data-lucide="palette" class="w-5 h-5 text-slate-900"></i>
-                        </div>
-                        <div class="hidden lg:block">
-                            <span class="font-bold text-sm block uppercase">Bloc 1 : Design</span>
-                            <span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span>
-                        </div>
+                <div onclick="playSound(); loadConstruction('Bloc 1 : Design Graphique'); closeAllMenus()" class="group cursor-pointer nav-item">
+                    <div class="flex items-center gap-3 p-2 opacity-60">
+                        <div class="p-2 border-2 border-slate-900 bg-pink-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><i data-lucide="palette" class="w-5 h-5 text-slate-900"></i></div>
+                        <div><span class="font-bold text-sm block uppercase">Bloc 1 : Design</span><span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span></div>
                     </div>
                 </div>
 
                 <!-- BLOC 2 (ACTIF) -->
                 <div class="manga-panel p-4 rounded-xl bg-white relative">
-                    <div class="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-['Bangers'] px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-3">
-                        EN COURS
-                    </div>
-
+                    <div class="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-['Bangers'] px-3 py-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-3">EN COURS</div>
                     <div class="flex items-center gap-3 mb-4 text-slate-900 border-b-2 border-slate-100 pb-2">
-                        <i data-lucide="rocket" class="w-6 h-6 flex-shrink-0 text-orange-600"></i>
-                        <span class="font-['Bangers'] text-xl hidden lg:block tracking-wide">Bloc 2 : Marketing</span>
+                        <i data-lucide="rocket" class="w-6 h-6 flex-shrink-0 text-orange-600"></i><span class="font-['Bangers'] text-xl tracking-wide">Bloc 2 : Marketing</span>
                     </div>
-
                     <div class="space-y-3">
-                        <!-- Module 1 -->
-                        <div id="nav-mod-1" onclick="switchModule(0)" class="cursor-pointer group flex items-center gap-3 nav-item p-1 rounded hover:bg-slate-50">
+                        <div id="nav-mod-1" onclick="playSound(); switchModule(0); closeAllMenus()" class="cursor-pointer group flex items-center gap-3 nav-item p-1 rounded hover:bg-slate-50">
                             <div class="w-2 h-2 bg-slate-900 rounded-full group-hover:bg-orange-500 transition-colors"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 1</p>
-                                <p class="text-[10px] font-medium text-slate-500">Stratégie & Analyse</p>
-                            </div>
+                            <div class="flex-1"><p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 1</p><p class="text-[10px] font-medium text-slate-500">Stratégie & Analyse</p></div>
                         </div>
-
-                        <!-- Module 2 -->
-                        <div id="nav-mod-2" onclick="switchModule(1)" class="cursor-pointer group flex items-center gap-3 nav-item opacity-70 p-1 rounded hover:bg-slate-50">
+                        <div id="nav-mod-2" onclick="playSound(); switchModule(1); closeAllMenus()" class="cursor-pointer group flex items-center gap-3 nav-item opacity-70 p-1 rounded hover:bg-slate-50">
                             <div class="w-2 h-2 border-2 border-slate-300 rounded-full"></div>
-                            <div class="flex-1">
-                                <p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 2</p>
-                                <p class="text-[10px] font-medium text-slate-500">Brand Content</p>
-                            </div>
+                            <div class="flex-1"><p class="text-sm font-bold group-hover:text-orange-600 transition-colors">Module 2</p><p class="text-[10px] font-medium text-slate-500">Brand Content</p></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- BLOC 3 -->
-                <div onclick="loadConstruction('Bloc 3 : Gestion de Projet')" class="group cursor-pointer nav-item">
-                    <div class="flex items-center gap-3 p-2 justify-center lg:justify-start opacity-60">
-                        <div class="p-2 border-2 border-slate-900 bg-cyan-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                            <i data-lucide="kanban-square" class="w-5 h-5 text-slate-900"></i>
-                        </div>
-                        <div class="hidden lg:block">
-                            <span class="font-bold text-sm block uppercase">Bloc 3 : Gestion</span>
-                            <span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span>
-                        </div>
+                <div onclick="playSound(); loadConstruction('Bloc 3 : Gestion de Projet'); closeAllMenus()" class="group cursor-pointer nav-item">
+                    <div class="flex items-center gap-3 p-2 opacity-60">
+                        <div class="p-2 border-2 border-slate-900 bg-cyan-100 rounded-lg shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"><i data-lucide="kanban-square" class="w-5 h-5 text-slate-900"></i></div>
+                        <div><span class="font-bold text-sm block uppercase">Bloc 3 : Gestion</span><span class="text-[10px] font-black bg-slate-900 text-white px-1.5 py-0.5 rounded">EN PAUSE</span></div>
                     </div>
                 </div>
-
             </nav>
 
-            <!-- Profil Utilisateur (Modifié : Classe no-lift ajoutée) -->
+            <!-- Profil Utilisateur -->
             <div class="mt-auto pt-6 relative z-10 flex-shrink-0">
                 <div class="manga-panel no-lift p-4 rounded-xl flex flex-col items-center text-center bg-white">
-                    <div id="avatar-container" class="relative w-24 h-24 mb-3 group cursor-pointer" onclick="playAvatarSound()" title="Clique pour la réplique !">
-                        <img src="https://i.pinimg.com/1200x/83/d6/ea/83d6ea6a371c54dd6cabcf55554ecc6a.jpg" 
-                             alt="Angélique" 
-                             class="w-full h-full rounded-full object-cover border-4 border-slate-900 group-hover:scale-110 transition-transform shadow-lg active:scale-95">
-                        <div id="avatar-bubble" class="absolute -top-20 -right-32 bg-white border-3 border-black p-3 rounded-2xl rounded-bl-none shadow-[4px_4px_0px_0px_#000] hidden z-50 w-48 transform rotate-2">
-                            <p class="text-xl font-['Bangers'] leading-none tracking-wide text-slate-900">LOVE & PEACE ! ✌️</p>
+                    <div id="avatar-container" class="relative w-24 h-24 mb-3 group cursor-pointer" onclick="playAvatarSound()">
+                        <img src="https://i.pinimg.com/1200x/83/d6/ea/83d6ea6a371c54dd6cabcf55554ecc6a.jpg" alt="Angélique" class="w-full h-full rounded-full object-cover border-4 border-slate-900 shadow-lg hover:scale-110 transition-transform duration-200">
+                        <div id="avatar-bubble" class="absolute -top-20 -right-20 lg:-right-32 bg-white border-3 border-black p-3 rounded-2xl rounded-bl-none shadow-[4px_4px_0px_0px_#000] hidden z-50 w-40 lg:w-48 transform rotate-2">
+                            <p class="text-lg lg:text-xl font-['Bangers'] leading-none tracking-wide text-slate-900">LOVE & PEACE ! ✌️</p>
                         </div>
-                        <div class="absolute -right-2 -bottom-2 bg-white rounded-full p-1 border-2 border-black opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute -right-1 -bottom-1 bg-white rounded-full p-1 border-2 border-black opacity-0 group-hover:opacity-100 transition-opacity">
                             <i data-lucide="volume-2" class="w-4 h-4"></i>
                         </div>
                     </div>
-                    
-                    <div class="hidden lg:block w-full">
+                    <div class="w-full">
                         <p class="font-['Bangers'] text-2xl tracking-wide text-slate-900">Angélique</p>
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Concepteur UI</p>
-                        
-                        <!-- Barre d'XP (43%) -->
                         <div class="w-full bg-slate-200 h-3 rounded-full border-2 border-slate-900 overflow-hidden relative">
-                            <div class="bg-green-500 h-full w-[43%]"></div>
-                            <div class="absolute top-0 left-0 w-full h-1 bg-white opacity-30"></div>
+                            <div class="bg-green-500 h-full w-[43%]"></div><div class="absolute top-0 left-0 w-full h-1 bg-white opacity-30"></div>
                         </div>
                         <p class="text-[10px] text-right font-bold mt-1">43% XP</p>
                     </div>
@@ -227,42 +191,56 @@
         </div>
     </aside>
 
-    <!-- 2. ZONE DE CONTENU PRINCIPALE -->
+    <!-- 2. CONTENU PRINCIPAL -->
     <main class="flex-1 flex flex-col h-full relative z-10 overflow-hidden bg-[#f8fafc]">
         
         <!-- Header -->
-        <header class="h-24 border-b-3 border-slate-900 px-8 flex items-center justify-between flex-shrink-0 bg-white">
-            <div>
-                <h1 id="header-title" class="text-3xl text-slate-900 uppercase">Module 1 : Stratégie & Marketing</h1>
-                <p id="header-subtitle" class="text-sm font-bold text-slate-500 flex items-center gap-2 font-mono">
-                    <span class="w-3 h-3 bg-green-500 border-2 border-black"></span> 5 CHAPITRES DISPONIBLES
+        <header class="h-20 lg:h-24 border-b-3 border-slate-900 px-4 lg:px-8 flex items-center justify-between flex-shrink-0 bg-white relative z-20">
+            <button onclick="toggleMobileMenu()" class="lg:hidden p-2 -ml-2 text-slate-900"><i data-lucide="menu" class="w-8 h-8"></i></button>
+
+            <div class="flex-1 px-4 lg:px-0 truncate">
+                <h1 id="header-title" class="text-xl lg:text-3xl text-slate-900 uppercase truncate">Module 1 : Stratégie</h1>
+                <p id="header-subtitle" class="text-xs lg:text-sm font-bold text-slate-500 flex items-center gap-2 font-mono">
+                    <span class="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 border-2 border-black"></span> 5 CHAPITRES
                 </p>
             </div>
-            <div class="flex gap-4">
-                <!-- Bouton Flashcards (Nouveau) -->
-                <button onclick="startFlashcards()" class="btn-manga bg-yellow-400 text-slate-900 px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-500">
-                    <i data-lucide="layers" class="w-5 h-5"></i>
-                    <span>Flashcards</span>
+
+            <div class="flex gap-2 lg:gap-4">
+                <button onclick="toggleMobileChapters()" class="lg:hidden p-2 text-slate-900 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_0px_#000] active:translate-y-1"><i data-lucide="list" class="w-5 h-5"></i></button>
+                <button onclick="startFlashcards()" class="hidden lg:flex btn-manga bg-yellow-400 text-slate-900 px-4 py-2 rounded-lg items-center gap-2 hover:bg-yellow-500">
+                    <i data-lucide="layers" class="w-5 h-5"></i> <span>Flashcards</span>
                 </button>
-                <!-- Bouton Duel Quiz -->
-                <button onclick="startQuiz()" class="btn-manga bg-indigo-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700">
-                    <i data-lucide="swords" class="w-5 h-5"></i>
-                    <span>Duel Quiz</span>
+                <button onclick="startQuiz()" class="hidden lg:flex btn-manga bg-indigo-600 text-white px-4 py-2 rounded-lg items-center gap-2 hover:bg-indigo-700">
+                    <i data-lucide="swords" class="w-5 h-5"></i> <span>Duel Quiz</span>
                 </button>
             </div>
         </header>
 
-        <!-- Corps du cours -->
-        <div class="flex-1 flex overflow-hidden">
+        <!-- Corps du cours (Flex Row pour Desktop) -->
+        <div class="flex-1 flex overflow-hidden relative">
             
-            <!-- Sommaire -->
-            <div id="sidebar-chapters" class="w-80 bg-slate-50 border-r-3 border-slate-900 overflow-y-auto p-4 space-y-3 hidden md:block flex-shrink-0">
-                <!-- Rempli par JS -->
+            <!-- Zone de Lecture (Au Centre) -->
+            <div class="flex-1 overflow-y-auto p-4 lg:p-12 relative bg-[url('https://www.transparenttextures.com/patterns/white-diamond.png')]" id="course-content">
+                <!-- LE CONTENU -->
             </div>
 
-            <!-- Zone de Lecture / Quiz / Flashcards -->
-            <div class="flex-1 overflow-y-auto p-8 lg:p-12 relative bg-[url('https://www.transparenttextures.com/patterns/white-diamond.png')]" id="course-content">
-                <!-- LE CONTENU SERA INJECTÉ ICI PAR JAVASCRIPT -->
+            <!-- Sommaire (Responsive: Sidebar Droite) -->
+            <!-- z-50 pour être sûr d'être au dessus -->
+            <div id="sidebar-chapters" class="fixed inset-y-0 right-0 z-50 w-72 bg-slate-50 border-l-3 border-slate-900 transform translate-x-full lg:translate-x-0 lg:static lg:w-80 lg:block flex-shrink-0 shadow-[-10px_0_20px_rgba(0,0,0,0.2)] lg:shadow-none transition-transform duration-300 flex flex-col h-full">
+                <!-- Header du Sommaire (Mobile) -->
+                <div class="p-4 bg-slate-900 text-white lg:hidden flex justify-between items-center border-b-2 border-black">
+                    <span class="font-['Bangers'] text-xl">SOMMAIRE</span>
+                    <button onclick="toggleMobileChapters()" class="p-1 hover:text-orange-500 bg-white text-slate-900 rounded border border-black"><i data-lucide="x" class="w-6 h-6"></i></button>
+                </div>
+                
+                <div class="p-4 grid grid-cols-2 gap-2 lg:hidden border-b-2 border-slate-200">
+                    <button onclick="startFlashcards(); closeAllMenus()" class="btn-manga bg-yellow-400 text-slate-900 py-2 text-xs rounded flex justify-center items-center gap-1"><i data-lucide="layers" class="w-4 h-4"></i> Flash</button>
+                    <button onclick="startQuiz(); closeAllMenus()" class="btn-manga bg-indigo-600 text-white py-2 text-xs rounded flex justify-center items-center gap-1"><i data-lucide="swords" class="w-4 h-4"></i> Quiz</button>
+                </div>
+
+                <div id="chapters-list" class="overflow-y-auto p-4 space-y-3 flex-1">
+                    <!-- Rempli par JS -->
+                </div>
             </div>
 
         </div>
@@ -270,19 +248,70 @@
 
     <!-- JAVASCRIPT -->
     <script>
-        lucide.createIcons();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        // --- SON AVATAR SEULEMENT ---
+        // --- GESTION MOBILE ---
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('main-sidebar');
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            
+            // Fermer l'autre menu si ouvert
+            if (!document.getElementById('sidebar-chapters').classList.contains('translate-x-full') && window.innerWidth < 1024) {
+                toggleMobileChapters();
+            }
+
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        function toggleMobileChapters() {
+            const sidebar = document.getElementById('sidebar-chapters');
+            const isClosed = sidebar.classList.contains('translate-x-full');
+
+            // Fermer l'autre menu si ouvert
+            if (!document.getElementById('main-sidebar').classList.contains('-translate-x-full') && window.innerWidth < 1024) {
+                toggleMobileMenu();
+            }
+
+            if (isClosed) {
+                sidebar.classList.remove('translate-x-full');
+            } else {
+                sidebar.classList.add('translate-x-full');
+            }
+        }
+
+        function closeAllMenus() {
+            if (window.innerWidth >= 1024) return; 
+            document.getElementById('main-sidebar').classList.add('-translate-x-full');
+            document.getElementById('sidebar-chapters').classList.add('translate-x-full');
+        }
+
+        function playSound() {
+            if (audioContext.state === 'suspended') audioContext.resume();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
         function playAvatarSound() {
             const bubble = document.getElementById('avatar-bubble');
             bubble.classList.remove('hidden');
             setTimeout(() => bubble.classList.add('hidden'), 2000);
-
             const audio = new Audio('vash.mp3');
-            audio.play().catch(e => { console.log("Son manquant (vash.mp3)"); });
+            audio.play().catch(e => { console.log("Son manquant (vash.mp3), pas grave !"); });
         }
 
-        // --- DONNÉES DU COURS ---
         const module1_chapters = [
             { title: "1. Modèle Économique", subtitle: "Créer, délivrer et capturer de la valeur", content: `<div class="mb-8 p-4 border-l-4 border-slate-900 bg-yellow-50"><p class="font-bold text-lg text-slate-800">Il s'agit de comprendre comment une entreprise génère ses revenus. Voici les 4 modèles les plus courants :</p></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-blue-100 p-2 rounded-bl-xl"><i data-lucide="shopping-bag" class="text-blue-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">E-COMMERCE</h4><p class="text-sm">Vente directe de produits physiques ou numériques. <br><em>(Ex: Amazon, Fnac)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-green-100 p-2 rounded-bl-xl"><i data-lucide="repeat" class="text-green-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">ABONNEMENT</h4><p class="text-sm">Paiement récurrent pour un accès continu. <br><em>(Ex: Netflix, Spotify)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-purple-100 p-2 rounded-bl-xl"><i data-lucide="megaphone" class="text-purple-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">PUBLICITÉ</h4><p class="text-sm">Monétisation de l'audience et des données. <br><em>(Ex: Facebook, Google)</em></p></div><div class="manga-panel p-5 rounded-lg relative overflow-hidden"><div class="absolute top-0 right-0 bg-orange-100 p-2 rounded-bl-xl"><i data-lucide="gift" class="text-orange-600"></i></div><h4 class="font-['Bangers'] text-xl mb-2">FREEMIUM</h4><p class="text-sm">Base gratuite + options payantes. <br><em>(Ex: LinkedIn, Jeux mobiles)</em></p></div></div>` },
             { title: "2. KPIs & Mesures", subtitle: "L'équation de la performance", content: `<p class="mb-6 font-medium">Pour mesurer le succès d'une interface, on utilise des indicateurs clés (KPI). Voici les formules essentielles :</p><div class="flex flex-col items-center mb-8 max-w-md mx-auto"><div class="w-full bg-slate-800 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">IMPRESSIONS (Vues)</div><div class="h-4 w-0.5 bg-black"></div><div class="w-[80%] bg-blue-600 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">CLICS (Intérêt)</div><div class="h-4 w-0.5 bg-black"></div><div class="w-[60%] bg-orange-500 text-white p-3 text-center font-bold border-2 border-black shadow-[4px_4px_0px_0px_#cbd5e1]">CONVERSIONS (Achats)</div></div><div class="space-y-6"><div class="manga-panel p-6 border-l-8 border-l-blue-500"><h4 class="font-['Bangers'] text-2xl text-blue-700">CTR (Taux de Clics)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Clics / Impressions) x 100</div><p class="text-sm mt-2">Mesure l'attractivité visuelle d'un élément (bouton, bannière).</p></div><div class="manga-panel p-6 border-l-8 border-l-orange-500 transform scale-105 shadow-xl bg-orange-50"><h4 class="font-['Bangers'] text-2xl text-orange-600">CVR (Conversion) <span class="text-xs bg-white px-2 py-1 rounded border border-black ml-2">KPI ROI</span></h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Conversions / Clics) x 100</div><p class="text-sm mt-2 font-bold">L'indicateur principal pour l'UI Designer.</p><p class="text-sm">Il prouve que l'interface a réussi à convaincre l'utilisateur d'agir.</p></div><div class="manga-panel p-6 border-l-8 border-l-purple-500"><h4 class="font-['Bangers'] text-2xl text-purple-700">CPA (Coût par Acquisition)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">Dépenses Totales / Nouveaux Clients</div><p class="text-sm mt-2">Combien ça coûte réellement d'obtenir un client payant ? Indispensable pour la rentabilité.</p></div><div class="manga-panel p-6 border-l-8 border-l-green-500"><h4 class="font-['Bangers'] text-2xl text-green-700">ROI (Retour sur Investissement)</h4><div class="my-2 font-mono bg-slate-900 text-white p-2 rounded inline-block text-sm">(Gain - Coût) / Coût x 100</div><p class="text-sm mt-2">Le juge de paix final. Est-ce que la campagne a rapporté plus qu'elle n'a coûté ?</p></div></div>` },
@@ -296,7 +325,6 @@
             1: { title: "Module 2 : Brand Content", subtitle: "EN CONSTRUCTION", chapters: [] }
         };
 
-        // --- DONNÉES FLASHCARDS ---
         const flashcards_m1 = [
             { q: "Qu'est-ce que le modèle Freemium ?", a: "Un service de base gratuit avec des options 'Premium' payantes (ex: LinkedIn)." },
             { q: "Quelle est la formule du CTR ?", a: "(Clics / Impressions) x 100" },
@@ -310,11 +338,6 @@
             { q: "À quoi sert SEMRush ?", a: "Espionner les mots-clés (SEO/SEA) des concurrents." }
         ];
 
-        let currentFlashcardIndex = 0;
-        let isFlipped = false;
-
-        // --- MOTEUR DE QUIZ ---
-        // Banque de 15 questions pour Module 1
         const quizBank_m1 = [
             { q: "Quel modèle économique repose sur la vente d'espace aux annonceurs ?", o: ["Abonnement", "Freemium", "Publicité", "E-commerce"], a: 2 },
             { q: "Quel KPI mesure l'attractivité visuelle d'un bouton ?", o: ["ROI", "CTR", "CPA", "CVR"], a: 1 },
@@ -333,221 +356,33 @@
             { q: "Le coût pour acquérir un nouveau client s'appelle...", o: ["CPC", "CPA", "CPM", "CTR"], a: 1 }
         ];
 
+        let currentModuleId = 0;
+        let currentChapterIndex = 0;
+        let currentFlashcardIndex = 0;
+        let isFlipped = false;
         let currentQuizQuestions = [];
         let currentQuestionIndex = 0;
         let score = 0;
-        let currentModuleId = 0;
-
-        function startFlashcards() {
-             if (currentModuleId === 1) {
-                alert("Pas de flashcards disponibles pour ce module en construction !");
-                return;
-            }
-            
-            document.getElementById('sidebar-chapters').classList.add('hidden');
-            currentFlashcardIndex = 0;
-            isFlipped = false;
-            
-            const container = document.getElementById('course-content');
-            container.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center fade-in">
-                    <div class="mb-6 text-center">
-                        <h2 class="text-4xl font-['Bangers'] text-slate-900 mb-2">FLASHCARDS</h2>
-                        <p class="font-bold text-slate-500">Clique pour retourner la carte</p>
-                    </div>
-
-                    <!-- Scene Flashcard -->
-                    <div class="perspective-1000 w-full max-w-lg h-80 cursor-pointer group" onclick="flipCard(this)">
-                        <div id="flashcard-inner" class="flip-card-inner relative w-full h-full transform-style-3d shadow-xl transition-all duration-500">
-                            
-                            <!-- Recto (Question) -->
-                            <div class="absolute w-full h-full backface-hidden bg-slate-900 text-white rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center shadow-[8px_8px_0px_0px_#cbd5e1]">
-                                <span class="absolute top-4 left-4 text-xs font-bold text-yellow-400 border border-yellow-400 px-2 py-1 rounded">QUESTION</span>
-                                <h3 id="fc-question" class="text-2xl font-bold font-['Bangers'] tracking-wide">...</h3>
-                                <i data-lucide="rotate-cw" class="w-6 h-6 mt-6 text-slate-500 animate-pulse"></i>
-                            </div>
-
-                            <!-- Verso (Réponse) -->
-                            <div class="absolute w-full h-full backface-hidden bg-white text-slate-900 rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center rotate-y-180 shadow-[8px_8px_0px_0px_#cbd5e1]">
-                                <span class="absolute top-4 left-4 text-xs font-bold text-green-600 border border-green-600 px-2 py-1 rounded">RÉPONSE</span>
-                                <p id="fc-answer" class="text-lg font-bold">...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Contrôles -->
-                    <div class="mt-10 flex gap-6 items-center">
-                        <button onclick="event.stopPropagation(); prevCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
-                        <span id="fc-counter" class="font-['Bangers'] text-xl">1 / 10</span>
-                        <button onclick="event.stopPropagation(); nextCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-right" class="w-6 h-6"></i></button>
-                    </div>
-                    
-                    <button onclick="switchModule(0)" class="mt-8 text-slate-500 hover:text-slate-900 font-bold underline text-sm">Quitter les Flashcards</button>
-                </div>
-            `;
-            
-            updateCardContent();
-            lucide.createIcons();
-        }
-
-        function flipCard() {
-            const card = document.getElementById('flashcard-inner');
-            isFlipped = !isFlipped;
-            if(isFlipped) card.style.transform = "rotateY(180deg)";
-            else card.style.transform = "rotateY(0deg)";
-        }
-
-        function nextCard() {
-            if (currentFlashcardIndex < flashcards_m1.length - 1) {
-                currentFlashcardIndex++;
-                resetFlipAndUpdate();
-            }
-        }
-
-        function prevCard() {
-            if (currentFlashcardIndex > 0) {
-                currentFlashcardIndex--;
-                resetFlipAndUpdate();
-            }
-        }
-
-        function resetFlipAndUpdate() {
-            isFlipped = false;
-            document.getElementById('flashcard-inner').style.transform = "rotateY(0deg)";
-            setTimeout(updateCardContent, 200); // Attendre que la carte soit revenue face visible (optionnel, mais plus joli) ou mettre à jour direct
-        }
-
-        function updateCardContent() {
-            const data = flashcards_m1[currentFlashcardIndex];
-            document.getElementById('fc-question').innerText = data.q;
-            document.getElementById('fc-answer').innerText = data.a;
-            document.getElementById('fc-counter').innerText = `${currentFlashcardIndex + 1} / ${flashcards_m1.length}`;
-        }
-
-        function startQuiz() {
-            // Si Module 2 (Vide), pas de quiz
-            if (currentModuleId === 1) {
-                alert("Pas de quiz disponible pour ce module en construction !");
-                return;
-            }
-
-            // 1. Sélectionner 10 questions au hasard
-            const shuffled = [...quizBank_m1].sort(() => 0.5 - Math.random());
-            currentQuizQuestions = shuffled.slice(0, 10);
-            currentQuestionIndex = 0;
-            score = 0;
-
-            // 2. Afficher l'interface de Quiz
-            document.getElementById('sidebar-chapters').classList.add('hidden');
-            const container = document.getElementById('course-content');
-            
-            container.innerHTML = `
-                <div id="quiz-container" class="max-w-2xl mx-auto h-full flex flex-col justify-center fade-in">
-                    <div class="mb-6 flex justify-between items-end border-b-4 border-slate-900 pb-4">
-                        <h2 class="text-4xl font-['Bangers'] text-slate-900">DUEL QUIZ</h2>
-                        <span class="text-xl font-bold font-mono bg-slate-900 text-white px-3 py-1 transform -skew-x-12">Question <span id="q-num">1</span>/10</span>
-                    </div>
-                    
-                    <div class="manga-panel p-8 bg-white mb-6 relative">
-                        <div class="absolute -top-4 -left-4 bg-orange-500 w-8 h-8 border-2 border-black"></div>
-                        <h3 id="q-text" class="text-2xl font-bold text-slate-800 mb-6 min-h-[80px] flex items-center">Chargement...</h3>
-                        
-                        <div id="q-options" class="grid grid-cols-1 gap-3">
-                            <!-- Options injectées ici -->
-                        </div>
-                    </div>
-
-                    <button id="next-btn" onclick="nextQuestion()" class="btn-manga bg-indigo-600 text-white py-3 text-xl w-full hidden">QUESTION SUIVANTE →</button>
-                </div>
-            `;
-
-            showQuestion();
-        }
-
-        function showQuestion() {
-            const q = currentQuizQuestions[currentQuestionIndex];
-            document.getElementById('q-num').innerText = currentQuestionIndex + 1;
-            document.getElementById('q-text').innerText = q.q;
-            document.getElementById('next-btn').classList.add('hidden');
-
-            const optionsContainer = document.getElementById('q-options');
-            optionsContainer.innerHTML = '';
-
-            q.o.forEach((opt, index) => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left p-4 border-2 border-slate-200 hover:border-slate-900 hover:bg-slate-50 font-bold transition-all rounded text-slate-700 quiz-option relative overflow-hidden";
-                btn.onclick = () => checkAnswer(index, q.a, btn);
-                btn.innerHTML = `<span class="inline-block w-6 font-mono opacity-50 mr-2">${['A','B','C','D'][index]}.</span> ${opt}`;
-                optionsContainer.appendChild(btn);
-            });
-        }
-
-        function checkAnswer(selectedIndex, correctIndex, btnElement) {
-            // Désactiver tous les boutons
-            const allBtns = document.querySelectorAll('.quiz-option');
-            allBtns.forEach(b => b.disabled = true);
-
-            if (selectedIndex === correctIndex) {
-                score++;
-                btnElement.classList.add('bg-green-100', 'border-green-600', 'text-green-800');
-                btnElement.innerHTML += ` <i data-lucide="check" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 w-6 h-6"></i>`;
-            } else {
-                btnElement.classList.add('bg-red-100', 'border-red-600', 'text-red-800');
-                // Montrer la bonne réponse
-                allBtns[correctIndex].classList.add('bg-green-100', 'border-green-600', 'text-green-800');
-            }
-            
-            lucide.createIcons();
-            document.getElementById('next-btn').classList.remove('hidden');
-        }
-
-        function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < 10) {
-                showQuestion();
-            } else {
-                showResults();
-            }
-        }
-
-        function showResults() {
-            let message = "";
-            let color = "red";
-            if (score >= 8) { message = "LÉGENDAIRE ! 🏆"; color = "yellow"; }
-            else if (score >= 5) { message = "PAS MAL DU TOUT ! 👍"; color = "blue"; }
-            else { message = "ENCORE UN EFFORT ! 💪"; color = "slate"; }
-
-            const container = document.getElementById('course-content');
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full fade-in text-center">
-                    <div class="manga-panel p-10 bg-white max-w-lg w-full">
-                        <h2 class="text-5xl font-['Bangers'] mb-2">RÉSULTAT</h2>
-                        <div class="text-6xl font-black text-indigo-600 mb-4">${score} / 10</div>
-                        <p class="text-xl font-bold text-slate-500 mb-8 border-t-2 border-slate-100 pt-4">${message}</p>
-                        
-                        <div class="flex gap-4 justify-center">
-                            <button onclick="startQuiz()" class="btn-manga bg-slate-900 text-white px-6 py-3">REJOUER ↺</button>
-                            <button onclick="switchModule(0)" class="btn-manga bg-white text-slate-900 px-6 py-3">RETOUR COURS</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
 
         function switchModule(moduleId) {
             currentModuleId = moduleId;
-            
+            currentChapterIndex = 0;
             const currentModData = modules[moduleId];
+            
             document.getElementById('header-title').innerText = currentModData.title;
             document.getElementById('header-subtitle').innerHTML = `<span class="w-3 h-3 bg-${moduleId===0?'green':'orange'}-500 border-2 border-black"></span> ${currentModData.subtitle}`;
 
-            const sidebar = document.getElementById('sidebar-chapters');
+            const sidebar = document.getElementById('chapters-list');
+            sidebar.innerHTML = '';
+            
             if (currentModData.chapters.length > 0) {
-                sidebar.classList.remove('hidden');
+                // FIX: Toujours réafficher le container des chapitres quand on charge un module
+                document.getElementById('sidebar-chapters').classList.remove('hidden');
+                
                 sidebar.innerHTML = `<h3 class="text-xs font-black text-slate-400 uppercase tracking-wider mb-4 px-2 font-mono">SOMMAIRE</h3>`;
                 currentModData.chapters.forEach((chap, index) => {
                     sidebar.innerHTML += `
-                        <button onclick="loadChapter(${index})" id="btn-${index}" class="btn-manga w-full text-left p-3 rounded bg-white hover:bg-slate-100 mb-2 flex items-center gap-3 group">
+                        <button onclick="loadChapter(${index}); closeAllMenus()" id="btn-${index}" class="btn-manga w-full text-left p-3 rounded bg-white hover:bg-slate-100 mb-2 flex items-center gap-3 group">
                             <span class="w-6 h-6 bg-slate-900 text-white flex items-center justify-center font-bold text-xs border border-black">${index + 1}</span>
                             <span class="text-sm font-bold truncate">${chap.title.split('. ')[1]}</span>
                         </button>
@@ -561,31 +396,30 @@
         }
 
         function loadChapter(index) {
+            currentChapterIndex = index;
             const data = modules[currentModuleId].chapters[index];
             const container = document.getElementById('course-content');
 
-            // Cible uniquement les boutons à l'intérieur de la sidebar pour éviter les conflits
-            document.querySelectorAll('#sidebar-chapters .btn-manga').forEach((btn, i) => {
+            // FIX: Assurer que la sidebar est visible (cas retour Quiz)
+            document.getElementById('sidebar-chapters').classList.remove('hidden');
+
+            // Active State
+            document.querySelectorAll('#chapters-list .btn-manga').forEach((btn, i) => {
                 if(i === index) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
 
             container.innerHTML = `
-                <div class="fade-in max-w-4xl mx-auto bg-white border-4 border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.2)] p-8 lg:p-12 relative overflow-hidden">
+                <div class="fade-in max-w-4xl mx-auto bg-white border-4 border-slate-900 shadow-[10px_10px_0px_0px_rgba(15,23,42,0.2)] p-6 lg:p-12 relative overflow-hidden mb-12">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-yellow-300 transform rotate-45 translate-x-16 -translate-y-16 border-b-4 border-l-4 border-slate-900 z-0"></div>
-                    
                     <div class="relative z-10">
                         <span class="inline-block px-3 py-1 bg-slate-900 text-white text-xs font-black mb-4 uppercase tracking-widest skew-x-[-10deg]">Chapitre ${index + 1}</span>
-                        <h2 class="text-4xl lg:text-5xl text-slate-900 mb-2 font-['Bangers']">${data.title}</h2>
-                        <p class="text-xl text-slate-500 font-bold mb-8 border-b-4 border-slate-900 pb-4 inline-block">${data.subtitle}</p>
-                        
-                        <div class="leading-relaxed text-lg text-slate-700 font-medium">
-                            ${data.content}
-                        </div>
-
+                        <h2 class="text-3xl lg:text-5xl text-slate-900 mb-2 font-['Bangers']">${data.title}</h2>
+                        <p class="text-lg lg:text-xl text-slate-500 font-bold mb-8 border-b-4 border-slate-900 pb-4 inline-block">${data.subtitle}</p>
+                        <div class="leading-relaxed text-base lg:text-lg text-slate-700 font-medium">${data.content}</div>
                         <div class="mt-12 flex justify-between items-center pt-8 border-t-2 border-slate-100">
-                            <button onclick="loadChapter(${Math.max(0, index - 1)})" class="text-slate-500 hover:text-slate-900 font-bold ${index === 0 ? 'invisible' : ''}">← PRÉCÉDENT</button>
-                            <button onclick="loadChapter(${Math.min(modules[currentModuleId].chapters.length - 1, index + 1)})" class="btn-manga bg-orange-500 text-white px-6 py-2 rounded flex items-center gap-2 hover:bg-orange-600 ${index === modules[currentModuleId].chapters.length - 1 ? 'hidden' : ''}">
+                            <button onclick="loadChapter(${Math.max(0, index - 1)}); document.getElementById('course-content').scrollTo(0,0)" class="text-slate-500 hover:text-slate-900 font-bold ${index === 0 ? 'invisible' : ''}">← PRÉCÉDENT</button>
+                            <button onclick="loadChapter(${Math.min(modules[currentModuleId].chapters.length - 1, index + 1)}); document.getElementById('course-content').scrollTo(0,0)" class="btn-manga bg-orange-500 text-white px-6 py-2 rounded flex items-center gap-2 hover:bg-orange-600 ${index === modules[currentModuleId].chapters.length - 1 ? 'hidden' : ''}">
                                 SUIVANT <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -597,31 +431,173 @@
 
         function loadConstruction(title) {
             document.getElementById('header-title').innerText = title;
-            document.getElementById('sidebar-chapters').classList.add('hidden');
-            
             const container = document.getElementById('course-content');
             container.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full fade-in text-center p-8">
                     <div class="manga-panel p-10 bg-white rounded-xl relative overflow-hidden max-w-lg w-full transform rotate-1 hover:rotate-0 transition-transform">
                         <div class="absolute inset-0 opacity-10" style="background: repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 0, transparent 20px);"></div>
-                        
                         <div class="relative z-10">
                             <i data-lucide="hammer" class="w-20 h-20 text-slate-900 mb-6 mx-auto"></i>
-                            <h2 class="text-4xl font-['Bangers'] text-slate-900 mb-4 uppercase">Zone en Travaux</h2>
-                            <p class="text-xl font-bold text-slate-500 mb-8">Cette île n'est pas encore explorée !</p>
-                            
-                            <div class="inline-block bg-slate-900 text-white font-['Bangers'] text-2xl px-6 py-2 transform -rotate-2 border-4 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
-                                TO BE CONTINUED...
-                            </div>
+                            <h2 class="text-3xl lg:text-4xl font-['Bangers'] text-slate-900 mb-4 uppercase">Zone en Travaux</h2>
+                            <p class="text-lg lg:text-xl font-bold text-slate-500 mb-8">Cette île n'est pas encore explorée !</p>
+                            <div class="inline-block bg-slate-900 text-white font-['Bangers'] text-xl lg:text-2xl px-6 py-2 transform -rotate-2 border-4 border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">TO BE CONTINUED...</div>
                         </div>
                     </div>
                 </div>
             `;
             lucide.createIcons();
         }
-        
-        // Init
-        switchModule(0);
+
+        function startFlashcards() {
+            if (currentModuleId === 1) { alert("Pas de flashcards disponibles !"); return; }
+            
+            // Masquer la sidebar pour donner plus d'espace
+            document.getElementById('sidebar-chapters').classList.add('hidden');
+            
+            currentFlashcardIndex = 0;
+            isFlipped = false;
+            const container = document.getElementById('course-content');
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center fade-in p-4">
+                    <div class="mb-6 text-center"><h2 class="text-3xl lg:text-4xl font-['Bangers'] text-slate-900 mb-2">FLASHCARDS</h2><p class="font-bold text-slate-500">Clique pour retourner la carte</p></div>
+                    <div class="perspective-1000 w-full max-w-lg h-64 lg:h-80 cursor-pointer group" onclick="flipCard()">
+                        <div id="flashcard-inner" class="flip-card-inner relative w-full h-full transform-style-3d shadow-xl transition-all duration-500">
+                            <div class="absolute w-full h-full backface-hidden bg-slate-900 text-white rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center shadow-[8px_8px_0px_0px_#cbd5e1]">
+                                <span class="absolute top-4 left-4 text-xs font-bold text-yellow-400 border border-yellow-400 px-2 py-1 rounded">QUESTION</span>
+                                <h3 id="fc-question" class="text-xl lg:text-2xl font-bold font-['Bangers'] tracking-wide">...</h3><i data-lucide="rotate-cw" class="w-6 h-6 mt-6 text-slate-500 animate-pulse"></i>
+                            </div>
+                            <div class="absolute w-full h-full backface-hidden bg-white text-slate-900 rounded-xl border-4 border-black p-8 flex flex-col items-center justify-center text-center rotate-y-180 shadow-[8px_8px_0px_0px_#cbd5e1]">
+                                <span class="absolute top-4 left-4 text-xs font-bold text-green-600 border border-green-600 px-2 py-1 rounded">RÉPONSE</span>
+                                <p id="fc-answer" class="text-base lg:text-lg font-bold">...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-10 flex gap-6 items-center">
+                        <button onclick="event.stopPropagation(); prevCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-left" class="w-6 h-6"></i></button>
+                        <span id="fc-counter" class="font-['Bangers'] text-xl">1 / 10</span>
+                        <button onclick="event.stopPropagation(); nextCard()" class="btn-manga bg-white p-3 rounded-full hover:bg-slate-100"><i data-lucide="arrow-right" class="w-6 h-6"></i></button>
+                    </div>
+                    <button onclick="switchModule(0)" class="mt-8 text-slate-500 hover:text-slate-900 font-bold underline text-sm">Quitter</button>
+                </div>
+            `;
+            updateCardContent();
+            lucide.createIcons();
+        }
+
+        function flipCard() {
+            const card = document.getElementById('flashcard-inner');
+            isFlipped = !isFlipped;
+            card.style.transform = isFlipped ? "rotateY(180deg)" : "rotateY(0deg)";
+        }
+
+        function nextCard() {
+            if (currentFlashcardIndex < flashcards_m1.length - 1) { currentFlashcardIndex++; resetFlipAndUpdate(); }
+        }
+        function prevCard() {
+            if (currentFlashcardIndex > 0) { currentFlashcardIndex--; resetFlipAndUpdate(); }
+        }
+        function resetFlipAndUpdate() {
+            isFlipped = false;
+            document.getElementById('flashcard-inner').style.transform = "rotateY(0deg)";
+            setTimeout(updateCardContent, 200);
+        }
+        function updateCardContent() {
+            const data = flashcards_m1[currentFlashcardIndex];
+            document.getElementById('fc-question').innerText = data.q;
+            document.getElementById('fc-answer').innerText = data.a;
+            document.getElementById('fc-counter').innerText = `${currentFlashcardIndex + 1} / ${flashcards_m1.length}`;
+        }
+
+        function startQuiz() {
+            if (currentModuleId === 1) { alert("Pas de quiz disponible !"); return; }
+            
+            // Masquer la sidebar pour le Quiz
+            document.getElementById('sidebar-chapters').classList.add('hidden');
+            
+            const shuffled = [...quizBank_m1].sort(() => 0.5 - Math.random());
+            currentQuizQuestions = shuffled.slice(0, 10);
+            currentQuestionIndex = 0;
+            score = 0;
+            const container = document.getElementById('course-content');
+            container.innerHTML = `
+                <div id="quiz-container" class="max-w-2xl mx-auto h-full flex flex-col justify-center fade-in p-4">
+                    <div class="mb-6 flex justify-between items-end border-b-4 border-slate-900 pb-4">
+                        <h2 class="text-3xl lg:text-4xl font-['Bangers'] text-slate-900">DUEL QUIZ</h2>
+                        <span class="text-lg lg:text-xl font-bold font-mono bg-slate-900 text-white px-3 py-1 transform -skew-x-12">Question <span id="q-num">1</span>/10</span>
+                    </div>
+                    <div class="manga-panel p-6 lg:p-8 bg-white mb-6 relative">
+                        <div class="absolute -top-4 -left-4 bg-orange-500 w-8 h-8 border-2 border-black"></div>
+                        <h3 id="q-text" class="text-xl lg:text-2xl font-bold text-slate-800 mb-6 min-h-[80px] flex items-center">Chargement...</h3>
+                        <div id="q-options" class="grid grid-cols-1 gap-3"></div>
+                    </div>
+                    <button id="next-btn" onclick="nextQuestion()" class="btn-manga bg-indigo-600 text-white py-3 text-xl w-full hidden">QUESTION SUIVANTE →</button>
+                </div>
+            `;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = currentQuizQuestions[currentQuestionIndex];
+            document.getElementById('q-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('q-text').innerText = q.q;
+            document.getElementById('next-btn').classList.add('hidden');
+            const optionsContainer = document.getElementById('q-options');
+            optionsContainer.innerHTML = '';
+            q.o.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 border-2 border-slate-200 hover:border-slate-900 hover:bg-slate-50 font-bold transition-all rounded text-slate-700 quiz-option relative overflow-hidden";
+                btn.onclick = () => checkAnswer(index, q.a, btn);
+                btn.innerHTML = `<span class="inline-block w-6 font-mono opacity-50 mr-2">${['A','B','C','D'][index]}.</span> ${opt}`;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, correctIndex, btnElement) {
+            const allBtns = document.querySelectorAll('.quiz-option');
+            allBtns.forEach(b => b.disabled = true);
+            if (selectedIndex === correctIndex) {
+                score++;
+                btnElement.classList.add('bg-green-100', 'border-green-600', 'text-green-800');
+                btnElement.innerHTML += ` <i data-lucide="check" class="absolute right-4 top-1/2 -translate-y-1/2 text-green-600 w-6 h-6"></i>`;
+            } else {
+                btnElement.classList.add('bg-red-100', 'border-red-600', 'text-red-800');
+                allBtns[correctIndex].classList.add('bg-green-100', 'border-green-600', 'text-green-800');
+            }
+            lucide.createIcons();
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < 10) { showQuestion(); } else { showResults(); }
+        }
+
+        function showResults() {
+            let message = "", color = "red";
+            if (score >= 8) { message = "LÉGENDAIRE ! 🏆"; color = "yellow"; }
+            else if (score >= 5) { message = "PAS MAL DU TOUT ! 👍"; color = "blue"; }
+            else { message = "ENCORE UN EFFORT ! 💪"; color = "slate"; }
+            const container = document.getElementById('course-content');
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full fade-in text-center p-4">
+                    <div class="manga-panel p-10 bg-white max-w-lg w-full">
+                        <h2 class="text-5xl font-['Bangers'] mb-2">RÉSULTAT</h2>
+                        <div class="text-6xl font-black text-indigo-600 mb-4">${score} / 10</div>
+                        <p class="text-xl font-bold text-slate-500 mb-8 border-t-2 border-slate-100 pt-4">${message}</p>
+                        <div class="flex gap-4 justify-center">
+                            <button onclick="startQuiz()" class="btn-manga bg-slate-900 text-white px-6 py-3">REJOUER ↺</button>
+                            <!-- FIX: Utiliser switchModule pour restaurer l'état normal -->
+                            <button onclick="switchModule(0)" class="btn-manga bg-white text-slate-900 px-6 py-3">COURS</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Init avec DOM Ready pour sécurité
+        document.addEventListener('DOMContentLoaded', () => {
+            switchModule(0);
+        });
     </script>
 </body>
 </html>
